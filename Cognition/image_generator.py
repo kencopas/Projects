@@ -1,12 +1,12 @@
-from random import randint
+from random import randint, uniform
 
-weight_graph = [0.75, 0.75, 0.75,
-                0.50, 0.50, 0.50,
-                0.25, 0.25, 0.25]
 
 # my_image = (0.4, 0.4, 0.4,
 #             0.4, 0, 0,
 #             0.2, 0.8, 0)
+
+
+weight_graph = [round(uniform(0, 1), 1) for _ in range(9)]
 
 def gen_set(n):
     my_dict = {}
