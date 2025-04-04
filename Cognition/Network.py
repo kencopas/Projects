@@ -26,25 +26,27 @@ class Network:
             print("")
 
     def train(self, data, lr):
+        c = 0
         total_error = 0
         for image, y in data.items():
             # print(f"Current image: \n\n{image[:3]}\n{image[3:6]}\n{image[6:]}\n\n
-            print(f"Correct Output: {y}")
+            if c % 50 == 0: print(f"Correct Output: {y}")
             cur_inputs = image
 
             # Feed each neuron in each layer all outputs of the neurons from the previous layer
             for layer in self.layers:
                 cur_inputs = layer.fire(cur_inputs)
             
-            print(f"Network Output: {round(cur_inputs[0], 3)}\n")
+            if c % 50 == 0: print(f"Network Output: {round(cur_inputs[0], 3)}\n")
 
+            c += 1
             a = cur_inputs[0]
             total_error += abs(a-y)
             output_error = (2 * a * (a - y) * (1 - a))
 
             self.backprop(output_error, lr)
 
-        print(f"Average Error: {round(total_error, 1)/1000}")
+        print(f"Average Error: {round(total_error/100, 2)}%")
 
         # for layer in self.layers:
         #     layer.show_matrix()
@@ -60,6 +62,6 @@ class Network:
                     delta_matrix[i].append(w*d)
             prev_layer.update(delta_matrix, lr)
 
-my_network = Network(9, [3, 1])
+my_network = Network(9, [30, 30, 1])
 my_network.visualize()
-my_network.train(gen_set(1000), 100) # Not sure why the learning rate has to be so high for this to work, will troubleshoot further
+my_network.train(gen_set(1000, 10), 10) # Not sure why the learning rate has to be so high for this to work, will troubleshoot further
