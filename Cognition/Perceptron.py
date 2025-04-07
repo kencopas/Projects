@@ -1,3 +1,9 @@
+"""
+
+This was my first attempt at a neural network from the ground up. It was not scalable, so I switched to a Layer class instead with each neuron as a list in a weight matrix.
+
+"""
+
 import math
 from image_generator import gen_set
 
