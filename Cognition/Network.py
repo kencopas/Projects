@@ -64,4 +64,4 @@ class Network:
 
 my_network = Network(9, [30, 30, 1])
 my_network.visualize()
-my_network.train(gen_set(1000, 10), 10) # Not sure why the learning rate has to be so high for this to work, will troubleshoot further
+my_network.train(gen_set(10000, 3), 10) # Not sure why the learning rate has to be so high for this to work, will troubleshoot further
