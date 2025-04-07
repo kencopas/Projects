@@ -1,6 +1,7 @@
 """
 
-This was my first attempt at a neural network from the ground up. It was not scalable, so I switched to a Layer class instead with each neuron as a list in a weight matrix.
+This was my first attempt at a neural network from the ground up.
+It was not scalable, so I switched to a Layer class instead with each neuron as a list in a weight matrix.
 
 """
 
