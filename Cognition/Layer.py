@@ -1,3 +1,10 @@
+"""
+
+This class holds each neuron as a list of weights, with the last element being the bias, within a larger weight matrix. This makes backpropagation much easier.
+This was my second attempt at building a neural network, after realizing the a perceptron class was not scalable.
+
+"""
+
 from image_generator import gen_set
 import math
 from random import uniform
@@ -10,7 +17,6 @@ class Layer:
         self.neuron_count = neuron_count
         self.input_count = input_count
         self.weight_matrix = [[uniform(-0.5, 0.5) for _ in range(input_count+1)] for _ in range(neuron_count)]
-        # self.show_matrix()
 
     def reset(self):
         self.weight_matrix = [[uniform(-0.5, 0.5) for _ in range(self.input_count+1)] for _ in range(self.neuron_count)]
@@ -28,16 +34,15 @@ class Layer:
         return 1 / (1 + math.exp(-x))
 
     def fire(self, image):
+
         self.inputs = image
         activation_list = []
+        
         # Feed the image tuple into each row of the weight matrix
         for index, weights in enumerate(self.weight_matrix):
             z = sum(x*w for x, w in zip(image, weights[:-1])) + weights[-1]
             a = self.sigmoid(z)
             activation_list.append(a)
-            #print(f"Activation for neuron {index}: {round(a, 3)}")
-
-        #print(f"Activation List: {[round(a, 3) for a in activation_list]}")
         
         self.activation_list = activation_list
         return activation_list
