@@ -6,7 +6,7 @@ it then sorts the sublists to the left and right. Because each traversal sorts t
 
 """
 
-from support import gen_arr, show_stats
+from sort_wrapper import wrap_sort
 
 # Median of three function
 def median_of_three(l, r, arr):
@@ -26,7 +26,7 @@ def swap(l, r, arr):
     arr[l], arr[r] = arr[r], arr[l]
 
 # Quick Sort algorithm | Approach: Iterative, Time Complexity: Avg O(nlog(n)) Worst O(n^2), Space Complexity: Avg O(log(n)) Worst O(n)
-@show_stats
+@wrap_sort
 def quick_isort(arr):
     size = len(arr)
     queue = [(0, size-1)] # Initialize queue of left and right bound pairs, starting with full list bounds
@@ -78,7 +78,7 @@ def quick_isort(arr):
     return arr
 
 # Quick Sort algorithm | Approach: Recursive, Time Complexity: Avg O(nlog(n)) Worst O(n^2), Space Complexity: O(n)
-@show_stats
+@wrap_sort
 def quick_rsort(arr):
 
     def recur(arr):
@@ -104,9 +104,9 @@ def quick_rsort(arr):
         if pivot != start:
             swap(pivot, start, arr)
 
-        pivot = start
-        left = start+1
-        right = stop
+        pivot = start    # Set the pivot index to the first element
+        left = start+1   # Set the left pointer to the second element
+        right = stop     # Set the right pointer to the last element
 
         # Loop until the pointers cross
         while left <= right:
@@ -133,14 +133,6 @@ def quick_rsort(arr):
         return sub_left+[arr[right]]+sub_right
     
     return recur(arr)
-
-if __name__ == "__main__":
-        
-    arr1 = gen_arr(length=10) # List of random integers 0-100 of length 20
-    arr2 = arr1.copy()
-
-    print("\n\nIterative Quick Sort:\n")
-    quick_isort(arr1)    # Iterative approach
-
-    print("\n\nRecursive Quick Sort:\n")
-    quick_rsort(arr2)    # Recursive approach
+    
+quick_isort(title="Quick Sort (Iterative)")    # Iterative approach
+quick_rsort(title="Quick Sort (Recursive)")    # Recursive approach

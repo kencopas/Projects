@@ -6,10 +6,10 @@ the current iteration. This causes an average Time Complexity of (n^2 - n) / 2, 
 
 """
 
-from support import gen_arr, show_stats
+from sort_wrapper import wrap_sort
 
 # Bubble Sort algorithm | Approach: Iterative, Time Complexity: O(n^2), Space Complexity: O(1)
-@show_stats
+@wrap_sort
 def bubble_sort(arr):
     size = len(arr)
     
@@ -33,9 +33,4 @@ def bubble_sort(arr):
     
     return arr
 
-if __name__ == "__main__":
-    
-    elements = gen_arr() # List of random integers 0-100 of length 20
-
-    print("\n\nBubble Sort:\n")
-    bubble_sort(elements)
+bubble_sort(title="Bubble Sort (Iterative)")
