@@ -9,8 +9,8 @@ import math
 from image_generator import gen_set
 
 class Perceptron:
-  def __init__(self, input_count, index):
-    self.index = index # Neuron index within layer
+  def __init__(self, input_count):
+
     self.input_count = input_count
     self.weights = [1 for _ in range(input_count)]
     self.bias = 0
@@ -19,14 +19,10 @@ class Perceptron:
   def weighted_sum(self, inputs):
     return sum(x*w for x, w in zip(inputs, self.weights)) + self.bias
   
+  # Sigmoid activation function
   def sigmoid(self, x):
     return 1 / (1 + math.exp(-x))
-  
-  # data: list of length n containing tuples of length 2
-  def activate(self, x):
-    sigmo = self.sigmoid(z)
-    return sigmo
-  
+
   def fire(self, inputs):
     self.inputs = inputs
     z = self.weighted_sum(inputs)

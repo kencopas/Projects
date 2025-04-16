@@ -4,6 +4,8 @@ This solution works with a minesweeper-like elimination process. Every time an i
 checks surrounding elements. All elements that are 1s are turned to 0s, preventing them from being found again. When the entire island is converted to 0s, the island_counter is
 increased and the linear traversal continues.
 
+* Note: If you would like to see the visualizer traverse the islands in an actual minesweeper-like fashion, change line 68 to: bfs = True, then run the Iterative approach
+
 """
 
 from time import sleep
@@ -13,15 +15,23 @@ from random import random
 
 # Prints the grid and number of islands found thus every 200ms for process visualization
 def print_grid(grid: list[list[str]], speed: int, island_count: int=None):
-    sleep(0.2/speed)
+
+    sleep(0.1/speed)
     print("----"*len(grid[0])+"-")
+
     for row in grid:
+
         my_str = "| "
+
         for element in row:
+            # The ' and 1 characters are used for ease of visualization, but can be changed to anything else
             my_str += f"{'\'' if element == 0 else '1'} | "
+
         print(my_str)
         print("----"*len(row)+"-")
-    if island_count: print(f"Island Count: {island_count}")
+
+    if island_count:
+        print(f"Island Count: {island_count}")
 
 # Recursive Approach
 # @timer
@@ -55,6 +65,10 @@ def rnumber_of_islands(grid: list[list[str]], speed: int) -> int:
 # @timer
 def inumber_of_islands(grid: list[list[str]], speed: int) -> int:
 
+    ######################################################
+    bfs = False
+    ######################################################
+
     width, height = len(grid[0]), len(grid)
     island_count = 0
     stack = [] # Coordinate stack
@@ -71,7 +85,7 @@ def inumber_of_islands(grid: list[list[str]], speed: int) -> int:
             # check() function equivalent
             # Once the first coordinate is appended to the stack, check itself and iterate through it's surrounding elements
             while stack:
-                x, y = stack.pop(0)
+                x, y = stack.pop(0 if bfs else -1)
 
                 # Check if coordinates are inbounds and the element is a 1
                 if 0 <= y < height and 0 <= x < width and grid[y][x] == 1:
@@ -83,9 +97,11 @@ def inumber_of_islands(grid: list[list[str]], speed: int) -> int:
                 
     return island_count
 
+# Generate a random grid with varying size and density
 def gen_grid(size, density):
     return [[round(random()+(density-0.5)) for _ in range(size)] for _ in range(size)]
 
+# Run a number of islands test with a randomly generated grid
 def test(approach: str, grid_size: int, density: int, speed: int):
 
     """
@@ -94,6 +110,7 @@ def test(approach: str, grid_size: int, density: int, speed: int):
 
     test_grid = gen_grid(grid_size, density)
     
+    # Validate approach input and run corresponding function
     if approach == "R":
         print("Test Grid:")
         print_grid(test_grid, speed)
@@ -111,12 +128,13 @@ def test_all(approach: str='R', grid_size: int='20', n: int=1, density: int=0.5,
 
 if __name__ == "__main__":
 
-    # Params:
-    #   Approach: str -> Iterative vs Recursive (Different pattern)
-    #   Grid Size: int
+    #   Approach: str   -> Iterative vs Recursive (Different pattern)
+    #   Grid Size: int  -> Length and width of grid
     #   Iterations: int -> Number of iterations of randomly generate matricies
-    #   Density: int -> 0-1 density of 1s on the matrix
-    #   Speed: int -> 0.1-20 speed of visualization
-    test_all('I', 20, 10, 1, 5)
+    #   Density: int    -> 0-1 density of 1s on the matrix
+    #   Speed: int      -> 0.1-5 speed of visualization
+    
+    test_all('I', 20, 10, 0.5, 1) # Iterative test 10 times on 20x20 grids of half density at normal speed
 
-    # !!! Run in 'OUTPUT' tab with ctrl-shift-n and click the lock in the top right corner to lock the output scroll, not terminal. Terminal violently shakes the visualization 
+    # !!! Run in 'OUTPUT' tab, not terminal, and click the lock in the top right corner to lock the output scroll.
+    # Terminal violently shakes the visualization

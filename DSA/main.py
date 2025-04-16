@@ -1,6 +1,6 @@
 from sorting_algorithms import quick_sort, bubble_sort
 from solutions import number_of_islands, generate_parentheses
-from solutions.stack import valid_parentheses
+from DSA.solutions import valid_parentheses
 
 def main():
     # quick_sort.rsort(title="Recursive Quicksort")

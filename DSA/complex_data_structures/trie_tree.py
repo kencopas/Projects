@@ -68,7 +68,7 @@ class Trie():
 
     # Writes data to tree_data.json for storage and visualization
     def write(self):
-        with open("tree_data.json", "w") as json_file:
+        with open("DSA/complex_data_structures/json/trie_data.json", "w") as json_file:
             json.dump(self.links, json_file, indent=4)
     
 if __name__ == "__main__":
