@@ -10,27 +10,30 @@ traversal style, checking conditionals before recursively calling or appending t
 
 """
 
-import time
+from utils.wrappers import timer
 
 # Recursive solution
-def rgenerate_parentheses(n):
+@timer
+def rgen(n):
     list = []
     
     # Recursively passes the counts of left and right parentheses and the string of the current permutation
-    def node(l, r, perm):
+    def next_paren(l, r, perm):
         
         if l < n: # Check if left parentheses count is under the max
-            node(l+1, r, perm+"(") 
+            next_paren(l+1, r, perm+"(") 
         if r < n and r < l: # Check if the right parentheses count is under the max and there is at least one more left parenthesis
-            node(l, r+1, perm+")")
+            next_paren(l, r+1, perm+")")
         if r == n == l: # Check if the max left and right parentheses coutn has been met
             list.append(perm)
 
-    node(1, 0, "(")
+    next_paren(1, 0, "(")
+
     return list
 
 # Iterative solution with stack
-def igenerate_parentheses(n):
+@timer
+def igen(n):
     list = []
     stack = [(0, 0, "")]
 
@@ -47,14 +50,3 @@ def igenerate_parentheses(n):
             list.append(perm)
 
     return list
-
-print("Recursive:\n")
-start = time.time()
-for pairs in igenerate_parentheses(10):
-    print(pairs)
-print(f"Runtime: {time.time()-start}")
-
-# print("Iterative:\n")
-# start = time.time()
-# igenerate_parentheses(5)
-# print(f"Runtime: {time.time()-start}")

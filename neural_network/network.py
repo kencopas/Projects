@@ -6,7 +6,7 @@ the first layer will recieve.
 
 """
 
-from Layer import Layer
+from layer import Layer
 from image_generator import gen_set
 
 class Network:
@@ -36,7 +36,7 @@ class Network:
             print("")
 
     # Trains the network given a dataset and learning rate
-    def train(self, data, lr, print_all=False):
+    def train(self, data: tuple[tuple[int]: int], lr: int, print_all=False):
 
         PRINT_INTERVAL = 1 if print_all else (len(data) // 50)          # Interval that prevents every output from printing unless specified
         total_error = 0

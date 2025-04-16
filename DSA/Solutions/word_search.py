@@ -7,7 +7,7 @@ passes updated coordinates, the current string with the check character removed,
 
 """
 
-def word_search(board, word):
+def word_search(board: list[list[str]], word: str):
     
     # Convert the board into a set for efficient lookup
     all_chars = {item for sublist in board for item in sublist}
@@ -19,7 +19,7 @@ def word_search(board, word):
             return False
 
     # Recursively check surrounding nodes
-    def backtrack(y, x, chars, visited):
+    def backtrack(y, x, chars: str, visited: set[tuple[int]]):
 
         # Return true if the word is empty (all characters have been found)
         if not chars:
@@ -45,3 +45,4 @@ def word_search(board, word):
 
     # Return false if no path is found
     return False
+

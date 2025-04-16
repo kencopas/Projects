@@ -82,10 +82,14 @@ if __name__ == "__main__":
         "Hinge", "Mirth", "Bramble", "Nomad", "Grotto", "Rumble", "Warden", "Bellow", "Shard", "Forge"
     ]
 
+    # Test instructions
     trie = Trie()
+
     trie.insert_from(word_list)
     trie.insert("Landlord")
+
     trie.search("Sable")
     trie.search("Gro")
     trie.search("Gro", prefix=True)
-    trie.write()
+
+    trie.write() # Saves data to json

@@ -1,5 +1,5 @@
 # Simpler implementation that can be optimized be converting to an iterative approach
-def word_search(board, word):
+def word_search(board: list[list[str]], word: str):
         
     # Convert the board into a set for efficient lookup
     all_chars = {item for sublist in board for item in sublist}
@@ -38,6 +38,7 @@ def word_search(board, word):
         for x, char in enumerate(row):
             
             if char == word[0]:
+
                 search = first_search(y, x, word)
                 if search:
                     return search
@@ -45,24 +46,28 @@ def word_search(board, word):
     # Return false if no path is found
     return False
 
-board = []
-words = []
+# Perform word search and print a board showing the path found
+def visualize_search(board: list[list[str]], word: str, dimensions: tuple[int]):
 
-length, height = len(board[0]), len(board)
-
-def find_word(word):
+    length, height = dimensions
 
     print(f"\nSearching for: {word}\n")
 
-    solution_board = [[0 for _ in range(length)] for _ in range(height)]
-    coord_list = word_search(board, word)
+    solution_board = [[0 for _ in range(length)] for _ in range(height)]    # Initialize the solution board of equal dimensions to search board
+    coord_list = word_search(board, word)   # Retrieve the coordinates for the solution
 
+    # Set the elements at each coordinate to 1
     for coord in coord_list:
         y, x = coord
         solution_board[y][x] = 1
 
+    # Print the solution board
     for row in solution_board:
         print(row)
 
-for word in words:
-    find_word(word)
+# Perform visualize_search on each word in a list
+def visualize_all(board: list[list[str]], words: list[str]):
+
+    dimensions = (len(board[0]), len(board))
+    for word in words:
+        visualize_search(board, word, dimensions)

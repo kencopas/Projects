@@ -6,11 +6,11 @@ the current iteration. This causes an average Time Complexity of (n^2 - n) / 2, 
 
 """
 
-from sort_wrapper import wrap_sort
+from utils.wrappers import wrap_sort
 
 # Bubble Sort algorithm | Approach: Iterative, Time Complexity: O(n^2), Space Complexity: O(1)
 @wrap_sort
-def bubble_sort(arr):
+def sort(arr):
     size = len(arr)
     
     # Repeat the algorithm n-1 times
@@ -32,5 +32,3 @@ def bubble_sort(arr):
             break
     
     return arr
-
-bubble_sort(title="Bubble Sort (Iterative)")

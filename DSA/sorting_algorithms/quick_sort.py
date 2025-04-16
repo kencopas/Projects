@@ -6,7 +6,7 @@ it then sorts the sublists to the left and right. Because each traversal sorts t
 
 """
 
-from sort_wrapper import wrap_sort
+from utils.wrappers import wrap_sort
 
 # Median of three function
 def median_of_three(l, r, arr):
@@ -27,7 +27,7 @@ def swap(l, r, arr):
 
 # Quick Sort algorithm | Approach: Iterative, Time Complexity: Avg O(nlog(n)) Worst O(n^2), Space Complexity: Avg O(log(n)) Worst O(n)
 @wrap_sort
-def quick_isort(arr):
+def isort(arr):
     size = len(arr)
     queue = [(0, size-1)] # Initialize queue of left and right bound pairs, starting with full list bounds
 
@@ -79,7 +79,7 @@ def quick_isort(arr):
 
 # Quick Sort algorithm | Approach: Recursive, Time Complexity: Avg O(nlog(n)) Worst O(n^2), Space Complexity: O(n)
 @wrap_sort
-def quick_rsort(arr):
+def rsort(arr):
 
     def recur(arr):
         size = len(arr)
@@ -133,6 +133,3 @@ def quick_rsort(arr):
         return sub_left+[arr[right]]+sub_right
     
     return recur(arr)
-    
-quick_isort(title="Quick Sort (Iterative)")    # Iterative approach
-quick_rsort(title="Quick Sort (Recursive)")    # Recursive approach

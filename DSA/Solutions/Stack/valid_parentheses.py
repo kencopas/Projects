@@ -1,3 +1,12 @@
+"""
+
+This function tests the validity of a set of grouping symbols, making sure they are in order and have their respective pairs. This solution uses a stack that holds open grouping
+symbols ('(', '[', '{'). While traversing the string of pairs, each open symbol is added to the stack. When a closing symbol is reached, the stack is checked to see if the top
+element is the corresponding opening symbol. If it is, the stack is popped, and if it is not, the function returns false. This works because of this principle: For any given set
+of grouping pairs traversed left to right, the closing symbol will always match the most recent unmatched opening symbol.
+
+"""
+
 # Tests if a set of parentheses are valid (each open symbol has a close symbol in order)
 def valid_parentheses(string: str) -> bool:
     pairs = {')': '(', '}': '{', ']': '['} # Mapping of each open symbol to it's close symbol
@@ -17,25 +26,28 @@ def valid_parentheses(string: str) -> bool:
         return True
     return False
 
-# Test cases
-test_strings = [
-    "",
-    "()",
-    "()[]{}",
-    "(]",
-    "([)]",
-    "{[]}",
-    "(",
-    ")",
-    "((()))",
-    "((())",
-    "())",
-    "{[()()]}",
-    "{[()()]}]",
-    "(((((((((())))))))))"
-]
+if __name__ == "__main__":
 
-# Run test cases
-for string in test_strings:
-    # print(f"\n{string}")
-    print(valid_parentheses(string))
+    # Test cases
+    test_strings = [
+        "",
+        "()",
+        "()[]{}",
+        "(]",
+        "([)]",
+        "{[]}",
+        "(",
+        ")",
+        "((()))",
+        "((())",
+        "())",
+        "{[()()]}",
+        "{[()()]}]",
+        "(((((((((())))))))))"
+    ]
+
+    # Run test cases
+    for string in test_strings:
+        # print(f"\n{string}")
+        pad = ' '*((20-len(string)))
+        print(f"{string}{pad} : {valid_parentheses(string)}")
