@@ -1,5 +1,6 @@
 """
 
+Time Complexity: O(V+E) | Space Complexity: O(V+E)
 Topological Sort is a sorting algorithm that sorts a Directed Acyclic Graph such that each node could be reached from left to right with it's necessary dependencies
 already reached. This algorithm works by picking a random node and performing DFS. Once a leaf node is reached or all of a node's neighbors have been visited, the node
 is appended to a list. This process repeats until all nodes have been visited. Once all nodes have been visited, the list is returned in reverse order.

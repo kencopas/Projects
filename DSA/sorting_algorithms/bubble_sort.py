@@ -1,5 +1,6 @@
 """
 
+Time Complexity: O(n^2) | Space Complexity: O(1)
 Bubble Sort is an iterative sorting algorithm that operates through pair swapping. The algorithm iterates each pair of elements in the list at index j and j+1. The elements are 
 swapped if the left is greater than the right, until the algorithm reaches the end of the list. Each iteration of this algorithm scans from index 0 to index length-i, with i being 
 the current iteration. This causes an average Time Complexity of (n^2 - n) / 2, which remains O(n^2), and because this algorithm sorts in-place, the Space Complexity is O(1).
