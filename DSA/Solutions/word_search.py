@@ -1,5 +1,6 @@
 """
 
+Time Complexity: O(R * C * 4^L) | Space Complexity: O(L) --- Avg Time Complexity: ~ O(R*C)
 This solution uses recursive backtracking to find a word within a word search board. Once a character is found in the board that matches the first character of the word, a call to
 backtrack() is made passing the starting coordinates of that character, the word, and an empty path set. Each recursive call checks if the current coordinates are in bounds, 
 haven't been path, and the character matches the first character from the passed string. If these conditions are met, a recursive call is made to the surrounding nodes. This call
@@ -21,14 +22,14 @@ def word_search(board: list[list[str]], word: str):
     # Recursively check surrounding nodes
     def backtrack(y, x, chars: str, visited: set[tuple[int]]):
 
-        # Return true if the word is empty (all characters have been found)
-        if not chars:
-            return True
-        
         # Return false if the coordinates are out of bounds, already visited, or the character does not match the next character in the word
         inbounds = (0 <= y < len(board) and 0 <= x < len(board[0]))
         if (not inbounds) or ((x, y) in visited) or (board[y][x] != chars[0]):
             return False
+
+        # Return true if the word is empty (all characters have been found)
+        if not chars:
+            return True
 
         # Return true if any recursive calls to the four surrounding nodes return true
         return (backtrack(y, x+1, chars[1:], visited | {(x, y)}) or backtrack(y-1, x, chars[1:], visited | {(x, y)}) 

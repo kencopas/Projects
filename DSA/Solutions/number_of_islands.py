@@ -1,5 +1,6 @@
 """
 
+Time Complexity: O(R*C) | Space Complexity: O(R*C)
 This solution works with a minesweeper-like elimination process. Every time an island is found, one or more 1s, the check() function is run on that island, which recursively
 checks surrounding elements. All elements that are 1s are turned to 0s, preventing them from being found again. When the entire island is converted to 0s, the island_counter is
 increased and the linear traversal continues.
@@ -134,7 +135,7 @@ if __name__ == "__main__":
     #   Density: int    -> 0-1 density of 1s on the matrix
     #   Speed: int      -> 0.1-5 speed of visualization
     
-    test_all('I', 20, 10, 0.5, 1) # Iterative test 10 times on 20x20 grids of half density at normal speed
+    test_all('I', 20, 10, 0.4, 1) # Iterative test 10 times on 20x20 grids of 0.4 density at normal speed
 
     # !!! Run in 'OUTPUT' tab, not terminal, and click the lock in the top right corner to lock the output scroll.
     # Terminal violently shakes the visualization

@@ -1,5 +1,6 @@
 """
 
+Time Complexity: O(n) | Space Complexity: O(n)
 This function tests the validity of a set of grouping symbols, making sure they are in order and have their respective pairs. This solution uses a stack that holds open grouping
 symbols ('(', '[', '{'). While traversing the string of pairs, each open symbol is added to the stack. When a closing symbol is reached, the stack is checked to see if the top
 element is the corresponding opening symbol. If it is, the stack is popped, and if it is not, the function returns false. This works because of this principle: For any given set

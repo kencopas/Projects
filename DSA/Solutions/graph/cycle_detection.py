@@ -1,5 +1,6 @@
 """
 
+Time Complexity: O(n) | Space Complexity: O(n)
 Cycle Detection is a means of determining whether a Directed Graph contains a cycle or not. The below function uses recursive DFS to traverse a Directed Graph while
 keeping track of the current path. Each path is passed as an argument to each recursive call, meaning the path for a given node only contains the node visited by each
 recursive call on the call stack. If a node that is already in the path is visited, a cycle is present and the function returns True. 

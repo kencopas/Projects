@@ -1,4 +1,4 @@
-# This file contains the support functions used by the sorting algorithms.
+# This file contains the support functions used by solutions and sorting algorithms.
 
 from random import randint
 from time import time

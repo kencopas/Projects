@@ -1,5 +1,6 @@
 """
 
+Time Complexity: O(2^n) | Space Complexity: O(2^n)
 Each function generates every possible permutation of n pairs of valid parentheses. The recursive and iterative implementation are nearly identical. The process is as follows:
 The variables are l (number of left parentheses thus far), r (number of right parentheses thus far), and perm (the current permuatation). The generation process follows a dfs-like
 traversal style, checking conditionals before recursively calling or appending the next permutations.
@@ -15,38 +16,38 @@ from utils.wrappers import timer
 # Recursive solution
 @timer
 def rgen(n):
-    list = []
+    output = []
     
     # Recursively passes the counts of left and right parentheses and the string of the current permutation
-    def next_paren(l, r, perm):
+    def backtrack(l, r, path):
         
         if l < n: # Check if left parentheses count is under the max
-            next_paren(l+1, r, perm+"(") 
+            backtrack(l+1, r, path+"(") 
         if r < n and r < l: # Check if the right parentheses count is under the max and there is at least one more left parenthesis
-            next_paren(l, r+1, perm+")")
+            backtrack(l, r+1, path+")")
         if r == n == l: # Check if the max left and right parentheses coutn has been met
-            list.append(perm)
+            output.append(path)
 
-    next_paren(1, 0, "(")
+    backtrack(1, 0, "(")
 
-    return list
+    return output
 
 # Iterative solution with stack
 @timer
 def igen(n):
-    list = []
+    output = []
     stack = [(0, 0, "")]
 
     # Iterates through each tuple in the queue | (l, r, cur_permutation)
     while stack:
 
-        l, r, perm = stack.pop()
+        l, r, path = stack.pop()
         
         if l < n: # Check if left parentheses count is under the max
-            stack.append((l+1, r, perm+"("))   
+            stack.append((l+1, r, path+"("))   
         if r < n and r < l: # Check if the right parentheses count is under the max and there is at least one more left parenthesis
-            stack.append((l, r+1, perm+")"))
+            stack.append((l, r+1, path+")"))
         if r == n == l: # Check if the max left and right parentheses coutn has been met
-            list.append(perm)
+            output.append(path)
 
-    return list
+    return output

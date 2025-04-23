@@ -1,5 +1,6 @@
 """
 
+Time Complexity: O(n^2) | Space Complexity: O(n) --- Avg Time Complexity: O(nlog(n))
 Quick Sort is a divide-and-conqeur sorting algorithm that can be implemented iteratively or recursively. This algorithm finds correct index of a single element, the pivot, by 
 using a two-pointer method to establish that all elements to the left are less than the pivot and all elements to the right are greater. Once a pivot is put in it's correct place,
 it then sorts the sublists to the left and right. Because each traversal sorts the list slightly, the average Time Complexity is O(nlog(n)), and the space complexity is O(n).
