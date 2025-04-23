@@ -5,7 +5,7 @@ AES key should not be lost, and should not be re-generated if one already exists
 
 """
 
-from backend.utils.sql_utils import safe_connect
+from utils.sql_utils import safe_connect
 import secrets, string
 
 # Single Sign-On class
@@ -20,6 +20,7 @@ class SSO:
     def __init__(self, service_name: str):
 
         self.service_name = service_name
+        self.profile_info = {}
         print(f"Initializing {service_name} Single Sign-On...")
 
         # Establish database connection with safe_connect
@@ -62,7 +63,7 @@ class SSO:
     def read_key(self):
         try:
             # Read key file into self.key
-            self.key = open('.key.txt', 'r').read()
+            self.key = open('SSO/backend/utils/.key.txt', 'r').read()
             if self.key:
                 return {"message": "Successfully read key!", "status": 200}
             else:
@@ -77,7 +78,7 @@ class SSO:
 
         try:
             # Create key file
-            with open(".key.txt", "w") as f:
+            with open("SSO/backend/utils/.key.txt", "w") as f:
                 f.write(passphrase)
             return {"message": "Key created!", "status": 200}
         except Exception as err:
@@ -101,11 +102,11 @@ class SSO:
     def create_user(self, username, password):
 
         # Check if the user already exists in the database
-        if self.database.run(f"SELECT * FROM credentials WHERE username='{username}'"):
+        if self.database.run(f"SELECT * FROM credentials WHERE username='{username}'") != ():
             return {"message": "Username already exists in database.", "status": 400}
         
         # Insert the username and password, using AES encryption on the password
-        if self.database.run(f"INSERT INTO credentials VALUES ('{username}', AES_ENCRYPT('{password}', '{self.key}'))"):
+        if self.database.run(f"INSERT INTO credentials VALUES ('{username}', AES_ENCRYPT('{password}', '{self.key}'))") == ():
             self.create_profile(username)
             return {'message': 'Successfully created user', 'status': 200}
         else:
@@ -122,27 +123,50 @@ class SSO:
             # Retrieve decrypted password from credentials
             decrypted = self.database.run(f"SELECT AES_DECRYPT(password, '{self.key}') FROM credentials WHERE username='{username}'")
             if password == decrypted[0][0].decode('ASCII'):
-                return {"message": "Login Successful!", "status": 200}
+                if self.load_profile(username):
+                    return {"message": "Login Successful, Profile Loaded", "status": 200}
+                else:
+                    return {"message": "Login Successful, Failed to Load Profile", "status": 400}
             else:
                 return {"message": "Incorrect password.", "status": 400}
-        except IndexError:
+        except (IndexError, TypeError):
             return {"message": "Username does not exist.", "status": 400}
         except Exception as err:
             return {"message": f"{type(err).__name__} {err}", "status": 500}
         
     def create_profile(self, username):
-        self.database.fullrun(f"""
+        # Create a default profile based on the username and default profile picture
+        return self.database.fullrun(f"""
             INSERT INTO users VALUES (
-                {username},
-                {username},
+                "{username}",
+                "{username}",
                 "Default profile picture file path",
-                ""
-            )
+                " "
+            );
         """)
         
     def load_profile(self, username):
-        username
-        pass
+        # Load the user information into the profile info for formatting
+        profile_info = self.database.fullrun(f"""
+            SELECT display_name, profile_picture, bio
+            FROM users
+            WHERE username='{username}'
+        """)
+
+        # Unpack table output
+        display_name, profile_picture, bio = profile_info[0][0]
+
+        # Store formatted data in profile_info
+        self.profile_info = {
+            'display_name': display_name,
+            'profile_picture': profile_picture,
+            'bio': bio
+        }
+
+        return True
+
+
+        
 
     def delete_user(self, username):
         self.database.run(f"DELETE FROM credentials WHERE username='{username}'") # Delete login info

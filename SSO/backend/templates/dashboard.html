@@ -1,0 +1,19 @@
+<html>
+    <head>
+        <title> Dashboard </title>
+    </head>
+    <body>
+        <h1 id="welcome_header" />
+        <p id="bio_field">
+        <script>
+            // Fetch the profile information for the current user
+            async function get_profile() {
+                const response = await fetch("http://127.0.0.1:5000/profile_info");
+                const profile_info = await response.json();
+                alert(profile_info)
+            }
+            
+            window.onload = get_profile;
+        </script>
+    </body>
+</html>

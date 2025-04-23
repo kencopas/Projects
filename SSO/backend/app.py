@@ -1,16 +1,25 @@
-from sso import SSO
-from flask import Flask, request, jsonify
+from utils.sso import SSO
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
 service = SSO('some app')
+service.database.verbose = True
 
-@app.route('/test')
-def test():
-    print("Hello")
-    return jsonify({'message': 'Hello!'})
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/<username>/dashboard')
+def dashboard(username):
+    return render_template('dashboard.html')
+
+@app.route('/profile_info')
+def profile_info():
+    global service
+    return jsonify({'message': service.profile_info, 'status': 200})
 
 @app.route('/login', methods=['POST'])
 def sign_in():
