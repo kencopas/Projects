@@ -1,4 +1,5 @@
 import mysql.connector
+from mysql.connector import Error
 
 # Prompt user and validate input
 def prompt(text: str, options: tuple) -> str:
@@ -8,7 +9,7 @@ def prompt(text: str, options: tuple) -> str:
     return ans
 
 # Safe connection and cursor querying
-class safe_connect():
+class safe_connect:
 
     """
     
@@ -23,7 +24,7 @@ class safe_connect():
         # Attempt to connect to mysql local instance
         try:
             self.connector = mysql.connector.connect(user=user, password=password, host=host, database=database)
-        except Exception as err:
+        except Error as err:
             print("Could not connect to server:", err)
             exit()
 
@@ -43,11 +44,11 @@ class safe_connect():
             self.query_count += 1
             
             # Return query results
-            output = tuple(self.cursor)
-            if self.verbose: print(output)
+            output = self.cursor.fetchall()
+            if self.verbose: print(f"{output}\n{self.cursor.rowcount} row(s) affected.")
             return output
 
-        except Exception as err:
+        except Error as err:
             # Print error and increment error count
             print(error_message)
             if self.verbose: print(f"Failed to execute: '{query}'\nError: {err}")
@@ -86,6 +87,7 @@ class safe_connect():
         self.error_count, self.query_count = 0, 0
 
     def close(self):
+        self.cursor.close()
         self.connector.close()
 
 if __name__ == "__main__":
@@ -94,7 +96,10 @@ if __name__ == "__main__":
     scnx = safe_connect(user='root', password='password', host='127.0.0.1', database='data')
 
     # Run a multi-line query
-    print(scnx.run("SELECT * FROM credentials"))
+    print(scnx.fullrun("""
+                   SELECT * FROM credentials;
+                   SELECT username FROM credentials;
+                   """))
 
     # Close the connection
     scnx.close()

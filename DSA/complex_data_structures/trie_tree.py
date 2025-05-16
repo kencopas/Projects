@@ -68,28 +68,24 @@ class Trie():
 
     # Writes data to tree_data.json for storage and visualization
     def write(self):
-        with open("DSA/complex_data_structures/json/trie_data.json", "w") as json_file:
+        with open("json/trie_data.json", "w") as json_file:
             json.dump(self.links, json_file, indent=4)
     
 if __name__ == "__main__":
     
     # Example random word list
     word_list = [
-        "Lantern", "Drift", "Maple", "Quarry", "Whisper", "Orbit", "Velvet", "Crumble", "Brisk", "Alloy",
-        "Meadow", "Spiral", "Clarity", "Nimbus", "Ember", "Grove", "Dusk", "Prism", "Vault", "Thistle",
-        "Mirage", "Timber", "Echo", "Quartz", "Fable", "Snare", "Tundra", "Cascade", "Latch", "Flicker",
-        "Sable", "Ponder", "Glimmer", "Husk", "Riddle", "Plume", "Crag", "Kindle", "Nestle", "Wisp",
-        "Hinge", "Mirth", "Bramble", "Nomad", "Grotto", "Rumble", "Warden", "Bellow", "Shard", "Forge"
+        "this", "is", "a", "trie", "tree", "there", "are", "many", 'common', 'words'
     ]
 
     # Test instructions
     trie = Trie()
 
     trie.insert_from(word_list)
-    trie.insert("Landlord")
+    # trie.insert("Landlord")
 
-    trie.search("Sable")
-    trie.search("Gro")
-    trie.search("Gro", prefix=True)
+    # trie.search("Sable")
+    # trie.search("Gro")
+    # trie.search("Gro", prefix=True)
 
     trie.write() # Saves data to json

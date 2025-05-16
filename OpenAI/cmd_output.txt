@@ -1,0 +1,4 @@
+
+C:\Users\kenneth.copas\OneDrive - PeopleShores PBC\Desktop\Projects\OpenAI>python app.py 
+
+C:\Users\kenneth.copas\OneDrive - PeopleShores PBC\Desktop\Projects\OpenAI>```

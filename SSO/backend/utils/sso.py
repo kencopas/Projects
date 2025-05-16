@@ -54,8 +54,6 @@ class SSO:
             # Attempt to create encryption key
             if self.create_key() == 200:
                 self.read_key()
-            else:
-                exit()
 
         return 200
 
