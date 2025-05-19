@@ -34,13 +34,13 @@ class EasySpark:
     # Safely read data from a json file or python object into a dataframe and return it
     def json_to_df(self, json_data: str | list | dict) -> DataFrame:
         try:
+            # Read data as filepath
             if type(json_data) == str:
                 data = self.spark.read.option("multiline", "true").json(json_data)
-
+            # Read data as python object, parellelizing before converting to a DataFrame
             elif type(json_data) in (list, dict):
                 parallel = self.spark.sparkContext.parallelize(json_data)
                 data = self.spark.createDataFrame(parallel)
-
             else:
                 raise Exception(f"Unable to convert datatype {type(json_data)} to dataframe with json_to_df function.")
             

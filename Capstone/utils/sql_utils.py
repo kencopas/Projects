@@ -14,6 +14,12 @@ def prompt(text: str, options: tuple[str]) -> str:
 
 # Safe connection and cursor querying
 class SafeSQL:
+
+    """
+    
+    This class just simplifies MySQL operations with error handling and configuration.
+    
+    """
     
     def __init__(self, user: str, password: str, host: str, database: str, *, verbose: bool = False) -> None:
 
