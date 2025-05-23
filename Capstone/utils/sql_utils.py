@@ -100,6 +100,30 @@ class SafeSQL:
         # Reset error and query counters
         self.error_count, self.query_count = 0, 0
 
+    # Parses an sql file using a section flag, delimiter, and paramaterized queries
+    def parse_file(self, fp: str, *, flag: str, params: tuple, delim: str = r'%%'):
+        try:
+
+            # Read the file contents
+            with open(fp, 'r') as f:
+                contents = f.read()
+            
+            # Split the file contents by the delimiter
+            scripts = contents.split(delim)
+            index = scripts.index(flag)
+
+            # Get the target script and split by parameter flag
+            script = scripts[index+1].split('%p')
+
+            # Join the script back together putting each parameter in place in order
+            full_script = ''.join([line+str(param) for line, param in zip(script, params+('',))])
+
+            # Run the script and return the results
+            return self.run(full_script)
+
+        except Exception as e:
+            print(f"Error parsing sql script:\n{e}")
+
     # Close the cursor and connection
     def close(self) -> None:
 
@@ -117,9 +141,14 @@ if __name__ == "__main__":
         user=data['user'],
         password=data['password'],
         host=data['host'],
-        database='classicmodels',
+        database='creditcard_capstone',
         verbose=True
     )
 
-    for row in ssql.run("init.sql"):
-        print(row)
+    result = ssql.parse_file(
+        'sql_scripts/cli_script.sql',
+        flag='VIEW_ACCOUNT',
+        params=(123451164,)
+    )
+
+    print(result)

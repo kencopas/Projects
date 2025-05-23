@@ -15,9 +15,10 @@ class Application:
     """
 
     COLUMNS = {
-        'credit_card': ['Transaction ID', 'Value', 'Type', 'Branch Code', 'Customer SSN', 'Time ID', 'Customer CCN'],
-        'customer': ['Customer SSN', 'First', 'Middle', 'Last', 'CCN', 'Street Address', 'City', 'State', 'Country', 'Zip', 'Phone', 'Email', 'Last Updated'],
-        'branch': ['Branch Code', 'Name', 'Street', 'City', 'State', 'Zip', 'Phone', 'Last Updated']
+        'TRANSACTIONS': ['Transaction ID', 'Value', 'Type', 'Branch Code', 'Customer SSN', 'Time ID', 'Customer CCN'],
+        'ACCOUNT': ['Customer SSN', 'First', 'Middle', 'Last', 'CCN', 'Street Address', 'City', 'State', 'Country', 'Zip', 'Phone', 'Email', 'Last Updated'],
+        'BILL': ['Value', 'Type', 'Timestamp'],
+        'ILL': ['Branch Code', 'Name', 'Street', 'City', 'State', 'Zip', 'Phone', 'Last Updated']
     }
 
 
@@ -58,58 +59,30 @@ class Application:
     
     def cli_query(self, path: tuple):
 
-        print(path.items())
         component_id, selections = list(path.items())[0]
 
         match component_id:
+
             case 'transactions_div':
+
                 cust_zip = selections['tzip']
                 mm, yyyy = selections['tdate'].split('-')
 
-                data = self.ssql.run(f"""
-                    -- Join the credit card and customer table, query only the credit card data
-                    SELECT
-                        cc.*
-                    FROM
-                        cdw_sapp_credit_card cc
-                    LEFT JOIN
-                        cdw_sapp_customer cust
-                    ON
-                        cc.cust_ssn = cust.ssn
-                    WHERE
-                        cust.cust_zip = {cust_zip}
-                        AND cc.timeid LIKE '{yyyy}{mm}%';
-                """)
-
-                df = pd.DataFrame(data, columns=self.COLUMNS['credit_card'])
-                total_bill = round(df['Value'].sum(), 2)
-
-                print(df)
-                print(f"\nTotal: {total_bill}")
+                flag = 'VIEW_TRANSACTIONS'
+                params = (cust_zip, f'{yyyy}{mm}')
 
             case 'customers_nav':
 
                 nav, selections = list(selections.items())[0]
-                print(nav, selections)
 
                 match nav:
+
                     case "view_account":
 
                         SSN = selections['SSN']
 
-                        data = self.ssql.run(f"""
-                            -- Query the customer data
-                            SELECT
-                                *
-                            FROM
-                                cdw_sapp_customer
-                            WHERE
-                                ssn = {SSN};
-                        """)
-
-                        df = pd.DataFrame(data, columns=self.COLUMNS['customer'])
-
-                        print(df)
+                        flag = 'VIEW_ACCOUNT'
+                        params = (SSN,)
                     
                     case "modify_account_div":
 
@@ -117,52 +90,16 @@ class Application:
                         attr = selections['modify_attribute']
                         new_val = selections['modify_value']
 
-                        data = self.ssql.run(f"""
-                            -- Update the value
-                            UPDATE
-                                cdw_sapp_customer
-                            SET
-                                {attr} = '{new_val}'
-                            WHERE
-                                ssn = {SSN};
-
-                            -- Query the updated row
-                            SELECT
-                                *
-                            FROM
-                                cdw_sapp_customer
-                            WHERE
-                                ssn = {SSN};
-                        """)
-
-                        self.ssql.commit()
-
-                        df = pd.DataFrame(data[1], columns=self.COLUMNS['customer'])
-
-                        print(f"Updated Data:\n\n{df}")
+                        flag = 'MODIFY_ACCOUNT'
+                        params = (attr, new_val, SSN, SSN)
 
                     case 'generate_bill_div':
 
                         ccn = selections['CCN']
                         mm, yyyy = selections['gbdate'].split('-')
 
-                        data = self.ssql.run(f"""
-                            SELECT
-                                transaction_value,
-                                transaction_type,
-                                timeid
-                            FROM
-                                cdw_sapp_credit_card
-                            WHERE
-                                cust_cc_no = {ccn}
-                                AND timeid LIKE '{yyyy}{mm}%';
-                        """)
-
-                        df = pd.DataFrame(data, columns=['Value', 'Type', 'Timestamp'])
-                        total_bill = round(df['Value'].sum(), 2)
-
-                        print(df)
-                        print(f"\nTotal: {total_bill}")
+                        flag = 'GENERATE_BILL'
+                        params = (ccn, f"{yyyy}{mm}")
 
                     case 'transactions_timeframe_div':
 
@@ -173,35 +110,25 @@ class Application:
                         fstart = f"{start[2]}{start[0]}{start[1]}"
                         fend = f"{end[2]}{end[0]}{end[1]}"
 
-                        data = self.ssql.run(f"""
-                            select
-                                cc.transaction_value,
-                                cc.transaction_type,
-                                cc.timeid,
-                                cc.cust_cc_no
-                            from
-                                cdw_sapp_credit_card cc
-                            left join
-                                cdw_sapp_customer cust
-                            on
-                                cust.ssn = cc.cust_ssn
-                            where
-                                cust.ssn = {SSN}
-                                AND cc.timeid >= {fstart}
-                                AND cc.timeid <= {fend};
-                        """)
-
-                        df = pd.DataFrame(data, columns=["Value", "Type", "Timestamp", "CCN"])
-                        total_bill = round(df['Value'].sum(), 2)
-
-                        print(df)
-                        print(f"\nTotal: {total_bill}")
+                        flag = 'TRANSACTIONS_TIMEFRAME'
+                        params = (SSN, fstart, fend)
 
                     case _:
                         print("Unknown Application.cli_query.customers_nav")
 
             case _:
                 print(f"unknown: Application.cli_query: {component_id}")
+        
+        data = self.ssql.parse_file(
+            'sql_scripts/cli_script.sql',
+            flag=flag,
+            params=params
+        )
+
+        column_key = flag.split('_')[1]
+        df = pd.DataFrame(data[int(not data[0])], columns=self.COLUMNS.get(column_key))
+
+        print(df)
 
     # Loads the config.json file into the config attribute
     def load_config(self) -> None:
@@ -218,6 +145,7 @@ class Application:
         """
         
         Functional Requirement 1.1
+
         Loads, transforms, and saves data from json format into Pyspark DataFrames
 
         Customer DataFrame - 
