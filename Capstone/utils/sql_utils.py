@@ -28,7 +28,6 @@ class SafeSQL:
         
         # Attempt to connect to mysql local instance
         try:
-            print(kwargs)
             self.connector = mysql.connector.connect(**kwargs)
         except Error as err:
             print("Could not connect to server:", err)
@@ -50,7 +49,7 @@ class SafeSQL:
             rowcount = 0
 
             # If a filepath is passed, read the file contents into the content variable
-            if len(sqlin) >= 4 and sqlin[-4:] == ".sql":
+            if len(sqlin) > 4 and sqlin[-4:] == ".sql":
                 # Read file contents
                 with open(sqlin, 'r') as f:
                     content = f.read()

@@ -1,13 +1,18 @@
 import findspark
 findspark.init()
-from pyspark.sql import SparkSession, DataFrame
 import os
-from collections.abc import Iterable
+import sys
 import json
+import requests
+import subprocess
+from collections.abc import Iterable
+from pyspark.sql import SparkSession, DataFrame
 
 class EasySpark:
 
     """
+
+    This is my detailed description.
     
     The EasySpark class acts as a much simpler connector to a SparkSession. This class contains the basic features required to perform ETL processes
     on the data in this application.
@@ -18,39 +23,76 @@ class EasySpark:
 
         # Ensure that the environment variable is set to Python 3.10.0
         os.environ["PYSPARK_PYTHON"] = config['pyspark_python']
+        self.verify_version(config['pyspark_python'])
 
-        print(config['mysql_jar'])
+        # Create the SparkSession builder
+        builder = SparkSession.builder.appName(app_name)
 
-        # Create a Spark session
-        self.spark = SparkSession.builder \
-            .appName(app_name) \
-            .config("spark.jars", config['mysql_jar']) \
-            .getOrCreate()
+        # Configure the builder with mysql if provided
+        if config.get('mysql_jar'):
+            builder.config("spark.jars", config['mysql_jar'])
+        
+        # Create the SparkSession
+        self.spark = builder.getOrCreate()
 
-        # Save log level and set into effect
-        self.log_level = log.upper()
+        # Set the log level
         self.spark.sparkContext.setLogLevel(log.upper())
 
         # Save the configurations
         self.config = config
 
-    # Safely read data from a json file or python object into a dataframe and return it
-    def json_to_df(self, json_data: str | list | dict) -> DataFrame:
-        try:
-            # Read data as filepath
-            if type(json_data) == str:
-                data = self.spark.read.option("multiline", "true").json(json_data)
-            # Read data as python object, parellelizing before converting to a DataFrame
-            elif type(json_data) in (list, dict):
-                parallel = self.spark.sparkContext.parallelize(json_data)
-                data = self.spark.createDataFrame(parallel)
-            else:
-                raise Exception(f"Unable to convert datatype {type(json_data)} to dataframe with json_to_df function.")
-            
-            return data
+    # Print a warning if the python version being run is not between versions 3.8 and 3.11
+    def verify_version(self, pyspark_python: str) -> None:
+
+        # Retrieve the version running the script
+        app_version = sys.version[:6]
+
+        # Retrieve the version running the SparkSession
+        completed_process = subprocess.run(
+            [pyspark_python, '--version'],
+            stdout=subprocess.PIPE,
+            text=True
+        )
+        pyspark_version = completed_process.stdout[-7:]
+
+        # Check if either version is not fully compatible
+        if not 8 <= int(app_version[2:4]) <= 11 or not 8 <= int(pyspark_version[2:4]) <= 11:
+            ans = input(
+                "\nOne or more incompatible Python versions:" +
+                f"\nApplication Version: {app_version}" +
+                f"\nPySpark Version: {pyspark_version}" +
+                "\nReccomended Versions: 3.8-3.11" +
+                "\nWould you like to continue? Y | N\n"
+            )
+            if ans.lower().strip() == "n":
+                exit(0)
+    # Retrieve JSON from an api endpoint and return it as a DataFrame
+    def api_to_df(self, api: str) -> DataFrame:
         
+        # Ping the api and save the json response
+        response = requests.get(api)
+        data = response.json()
+
+        # Convert JSON data to RDD and create DataFrame from RDD
+        rdd = self.spark.sparkContext.parallelize([json.dumps(data)])
+        df = self.spark.read.json(rdd)
+
+        return df
+
+    # Safely read data from a json file or python object into a dataframe and return it
+    def file_to_df(self, fp: str) -> DataFrame:
+
+        ext = os.path.splitext(fp)[1][1:]
+        converter = getattr(self.spark.read, ext)
+        
+        options = {"multiLine": True}
+        if ext == 'csv':
+            options.update({"header": True})
+        try:
+            data = converter(fp, **options)
+            return data
         except Exception as err:
-            print(f"Error occured while reading file: {json_data}")
+            print(f"Error occured while reading file: {fp}")
             print(f"{type(err).__name__}: {err}")
 
     # This method takes any number of filepaths, converts each to a dataframe, and returns each dataframe in the form of a specified Iterable object
@@ -60,7 +102,7 @@ class EasySpark:
 
         # For each filepath, convert the file contents to a dataframe and save the filename
         for fp in filepaths:
-            df = self.json_to_df(fp)
+            df = self.file_to_df(fp)
             dataframes.append(df)
             filenames.append(os.path.basename(fp).split('.')[0])
 
@@ -87,7 +129,6 @@ class EasySpark:
                 raise Exception("Attempting to write to MySQL without configurations.")
             
             # Then write the DataFrame to the specified table with the passed mode  
-            print(self.config)      
             df.write \
                 .format("jdbc") \
                 .option("url", self.config['jdbc_url']) \
@@ -134,4 +175,10 @@ class EasySpark:
         self.spark.stop()
 
 if __name__ == "__main__":
-    pass
+
+    # Create an EasySpark Session
+    espark = EasySpark(
+        app_name="SBA345",
+        log="FATAL",
+        config={'pyspark_python': r'C:\Users\kenneth.copas\AppData\Local\Programs\Python\Python310\python.exe'}
+    )

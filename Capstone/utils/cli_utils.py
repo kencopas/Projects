@@ -96,11 +96,23 @@ class MenuDivider(UIComponent):
     
     """
 
-    def run(self) -> tuple[str, any]:
-        outputs = tuple(ui.run() for ui in self.components)
+    def run(self) -> dict[str: any]:
+
+        # Construct a selections dictionary in the from of {prompt_id: selection...}
+        selections = dict()
+        for ui in self.components:
+            ui_output = ui.run()
+            print(ui_output)
+            selections.update(ui_output)
+
+        # Format the output as (id, selections_dict) if there is an id
+        output = {self['id']: selections} if self['id'] else selections
+
+        # Pass the output to the pass_values function if it exists and return it
         if self['pass_values']:
-            self['pass_values'](outputs)
-        return (self['id'], outputs) if self['id'] else outputs
+            self['pass_values'](output)
+
+        return output
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -118,12 +130,15 @@ class MultipleChoice(UIComponent):
     
     """
 
-    def run(self) -> tuple[str, any]:
+    def run(self) -> dict[str: any]:
         selection = enumchoices(self['prompt'], self['options'])
         # Run the selection before returning if it is a UICompnent
         if issubclass(type(selection), UIComponent):
             selection = selection.run()
-        return (self['id'], selection) if self['id'] else selection
+        output = {self['id']: selection} if self['id'] else selection
+        if self['pass_values']:
+            self['pass_values'](output)
+        return output
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -142,9 +157,9 @@ class UserInput(UIComponent):
     """
     
     # Prompts the user for input, validating with properties, returns id and input
-    def run(self) -> tuple[str, any]:
+    def run(self) -> dict[str: any]:
         ans = prompt(self['prompt'], **self.props)
-        return (self['id'], ans) if self['id'] else ans
+        return {self['id']: ans} if self['id'] else ans
 
 # ---------------------------------------------------------------------------------------------------------------------
 
