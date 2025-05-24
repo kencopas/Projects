@@ -1,4 +1,4 @@
-from pyspark.sql.functions import col, lower, concat, lit, substring, lpad, regexp_replace, concat_ws
+from pyspark.sql.functions import col, lower, concat, lit, substring, lpad
 from pyspark.sql import DataFrame
 from utils.spark_utils import EasySpark
 from utils.sql_utils import SafeSQL
@@ -9,18 +9,10 @@ import pandas as pd
 class Application:
 
     """
-    
+
     app
-    
+
     """
-
-    COLUMNS = {
-        'TRANSACTIONS': ['Transaction ID', 'Value', 'Type', 'Branch Code', 'Customer SSN', 'Time ID', 'Customer CCN'],
-        'ACCOUNT': ['Customer SSN', 'First', 'Middle', 'Last', 'CCN', 'Street Address', 'City', 'State', 'Country', 'Zip', 'Phone', 'Email', 'Last Updated'],
-        'BILL': ['Value', 'Type', 'Timestamp'],
-        'ILL': ['Branch Code', 'Name', 'Street', 'City', 'State', 'Zip', 'Phone', 'Last Updated']
-    }
-
 
     def __init__(self, app_name: str, *, log: str) -> None:
 
@@ -46,6 +38,7 @@ class Application:
         self.ssql.commit()
 
         # If the last sql query did not return any rows, extract, transform, and load the customer data into the database
+        print(query_output)
         if not query_output[-1]:
             self.pipeline()
 
@@ -59,10 +52,23 @@ class Application:
     
     def cli_query(self, path: tuple):
 
+        """
+        
+        The CLI-query method takes the CLI path and tracks where the user
+        navigated to in the menu, determining which flag to use to correspond
+        to the correct sql query in the cli_script.sql file. Once the
+        navigation has been tracked, the user's choices and inputs are
+        extracted from the path and used to construct the parameters for the
+        query. After the query is run, the output is saved and displayed in
+        a DataFrame.
+        
+        """
+
+        # Extract the component id and remaining selections
         component_id, selections = list(path.items())[0]
 
+        # Route to the correct component
         match component_id:
-
             case 'transactions_div':
 
                 cust_zip = selections['tzip']
@@ -72,11 +78,10 @@ class Application:
                 params = (cust_zip, f'{yyyy}{mm}')
 
             case 'customers_nav':
-
                 nav, selections = list(selections.items())[0]
 
+                # Route to the correct query within the customers component
                 match nav:
-
                     case "view_account":
 
                         SSN = selections['SSN']
@@ -107,6 +112,7 @@ class Application:
                         start = selections['tstartdate'].split('-')
                         end = selections['tenddate'].split('-')
 
+                        # Format the start and end date as YYYYMMDD
                         fstart = f"{start[2]}{start[0]}{start[1]}"
                         fend = f"{end[2]}{end[0]}{end[1]}"
 
@@ -118,28 +124,49 @@ class Application:
 
             case _:
                 print(f"unknown: Application.cli_query: {component_id}")
+
+        # Release limits on max columns and rows
+        pd.set_option("display.max_columns", None)
+        pd.set_option("display.max_rows", None)
         
+        # Run the appropriate query and save the data
         data = self.ssql.parse_file(
             'sql_scripts/cli_script.sql',
             flag=flag,
             params=params
         )
 
-        column_key = flag.split('_')[1]
-        df = pd.DataFrame(data[int(not data[0])], columns=self.COLUMNS.get(column_key))
+        # Commit the query to the database
+        self.ssql.commit()
 
+        # Remove all empty lists from the data
+        data = list(filter(bool, data))
+
+        # Unpack the data if it is unnecessarily nested
+        if len(data) == 1:
+            data = data[0]
+
+        # Construct a DataFrame from the data
+        df = pd.DataFrame(data[1:], columns=data[0])
+
+        # Print the dataframe
         print(df)
+
+        # Total value if the value column exists
+        if 'Value' in df.columns:
+            total_value = df['Value'].sum()
+            print(f"\nTotal: {total_value}")
 
     # Loads the config.json file into the config attribute
     def load_config(self) -> None:
-        with open("config.json") as f:
+        with open("macconfig.json") as f:
             self.config = json.load(f)
 
     # Read data from json into a dataframe
     def json_read(self, json_file: str) -> DataFrame:
         return self.espark.json_to_df(json_file)
 
-    # Perform ETL on the json files and endpoint, saving output into MySQL using PySpark
+    # Perform ETL on the json files and endpoint, saving output into MySQL
     def pipeline(self) -> None:
 
         """
@@ -219,6 +246,7 @@ class Application:
         # This works because the filenames directly correspond to the MySQL table names
         for name, df in df_map.items():
             self.espark.mysql_write(name, df)
+
 
 if __name__ == "__main__":
 

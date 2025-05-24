@@ -93,6 +93,7 @@ class CLIManager:
         )
 
         menu_nav = MultipleChoice(
+            root=True,
             id='menu_nav',
             prompt="Welcome to the Loan Application Interface! Would you like to view transcation details or customer details?",
             options={

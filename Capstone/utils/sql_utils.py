@@ -18,7 +18,8 @@ class SafeSQL:
 
     """
     
-    This class just simplifies MySQL operations with error handling and configuration.
+    This class just simplifies MySQL operations with error handling
+    and configuration.
     
     """
     
@@ -63,13 +64,20 @@ class SafeSQL:
             # Run each query and append the result to the outputs
             for query in query_arr:
 
-                # Execute query and increment query count
+                # Execute query and increment query and row count
                 self.cursor.execute(query)
                 self.query_count += 1
                 rowcount += self.cursor.rowcount
+
+                output = self.cursor.fetchall()
+
+                # Retrieve the column names and insert them into the output
+                if self.cursor.description:
+                    col_names = [desc[0] for desc in self.cursor.description]
+                    output = [col_names]+output
                 
                 # Append the query results to outputs
-                outputs.append(self.cursor.fetchall())
+                outputs.append(output)
 
             if self.verbose:
                 print(f"Executed {len(query_arr)} queries.\n{rowcount} rows affected.")

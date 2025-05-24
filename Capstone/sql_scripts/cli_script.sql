@@ -41,9 +41,9 @@ WHERE
 -- %%GENERATE_BILL%%
 -- Select the transaction details for a credit card number during a specified year and month
 SELECT
-    transaction_value,
-    transaction_type,
-    timeid
+    transaction_value 'Value',
+    transaction_type 'Type',
+    timeid 'Timestamp'
 FROM
     cdw_sapp_credit_card
 WHERE

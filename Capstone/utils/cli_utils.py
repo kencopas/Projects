@@ -131,14 +131,16 @@ class MultipleChoice(UIComponent):
     """
 
     def run(self) -> dict[str: any]:
-        selection = enumchoices(self['prompt'], self['options'])
-        # Run the selection before returning if it is a UICompnent
-        if issubclass(type(selection), UIComponent):
-            selection = selection.run()
-        output = {self['id']: selection} if self['id'] else selection
-        if self['pass_values']:
-            self['pass_values'](output)
-        return output
+        while True:
+            selection = enumchoices(self['prompt'], self['options'])
+            # Run the selection before returning if it is a UICompnent
+            if issubclass(type(selection), UIComponent):
+                selection = selection.run()
+            output = {self['id']: selection} if self['id'] else selection
+            if self['pass_values']:
+                self['pass_values'](output)
+            if not self['root']:    
+                return output
 
 # ---------------------------------------------------------------------------------------------------------------------
 

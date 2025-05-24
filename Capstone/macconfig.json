@@ -1,0 +1,10 @@
+{
+    "jdbc_driver": "com.mysql.cj.jdbc.Driver",
+    "jdbc_url": "jdbc:mysql://localhost:3306/creditcard_capstone",
+    "mysql_jar": "/Users/kennycopas/Desktop/Projects/Capstone/mysql-connector-j-9.3.0.jar",
+    "pyspark_python": "/usr/local/bin/python3.10",
+    "user": "root",
+    "password": "password",
+    "host": "127.0.0.1",
+    "database": "creditcard_capstone"   
+}
