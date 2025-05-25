@@ -111,7 +111,10 @@ class SafeSQL:
                 # Append the query results to outputs
                 outputs.append(output)
 
-            self.verbose and print(f"Executed {len(query_arr)} queries.\n{rowcount} rows affected.")
+            self.verbose and print(
+                f"Executed {len(query_arr)} queries."
+                f"\n{rowcount} rows affected."
+            )
 
             # unpacked the outputs list before returning
             unpacked(outputs)
@@ -130,7 +133,10 @@ class SafeSQL:
 
         # If there are one or more errors, prompt the user before committing
         if self.error_count > 0:
-            ans = input(f"{self.error_count} errors occured during query. Would you still like to commit?  Y | N \n")
+            ans = input(
+                f"{self.error_count} errors occured during query."
+                "Would you still like to commit?  Y | N \n"
+            )
             if ans.lower() != "y":
                 print("Commit aborted.")
                 return
@@ -141,8 +147,23 @@ class SafeSQL:
         # Reset error and query counters
         self.error_count, self.query_count = 0, 0
 
-    # Parses an sql file using a section flag, delimiter, and paramaterized queries
-    def parse_file(self, fp: str, *, flag: str, params: tuple, delim: str = r'%%'):
+    def parse_file(
+        self,
+        fp: str,
+        *,
+        flag: str,
+        params: tuple
+    ):
+
+        """
+
+        The parse_file method takes a filepath, flag, and parameters. The file
+        is read and separated into query sections by the delimiter '%%'. The
+        parameters are then inserted into the query section with the specified
+        flag between delimiters before that section is executed.
+
+        """
+
         try:
 
             # Read the file contents
@@ -150,7 +171,7 @@ class SafeSQL:
                 contents = f.read()
 
             # Split the file contents by the delimiter
-            scripts = contents.split(delim)
+            scripts = contents.split(r'%%')
             index = scripts.index(flag)
 
             # Get the target script and split by parameter flag
