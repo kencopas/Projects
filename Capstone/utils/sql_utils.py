@@ -42,10 +42,8 @@ def unpacked(data: Iterable, *, remove_empty: bool = False) -> Iterable:
 class SafeSQL:
 
     """
-
     This class just simplifies MySQL operations with error handling
     and configuration.
-
     """
 
     def __init__(self, **kwargs) -> None:
@@ -69,10 +67,8 @@ class SafeSQL:
     def run(self, sqlin: str) -> list[RowType] | list[list[RowType]]:
 
         """
-
         Safe query function, takes an sql script as text or a filepath,
         executes the contents, and returns a list of the results.
-
         """
 
         try:
@@ -156,12 +152,10 @@ class SafeSQL:
     ):
 
         """
-
         The parse_file method takes a filepath, flag, and parameters. The file
         is read and separated into query sections by the delimiter '%%'. The
         parameters are then inserted into the query section with the specified
         flag between delimiters before that section is executed.
-
         """
 
         try:
@@ -177,8 +171,11 @@ class SafeSQL:
             # Get the target script and split by parameter flag
             script = scripts[index+1].split(r'{}')
 
-            # Join the script back together putting each parameter in place in order
-            full_script = ''.join([line+str(param) for line, param in zip(script, params+('',))])
+            # Join the script back together inserting the parameters
+            full_script = ''.join([
+                line+str(param)
+                for line, param in zip(script, params+('',))
+            ])
 
             # Run the script and return the results
             return self.run(full_script)

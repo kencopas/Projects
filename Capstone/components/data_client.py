@@ -1,11 +1,14 @@
 import os
-import sys
 import json
-import subprocess
+import glob
 from collections.abc import Iterable
 
 import requests
 from pyspark.sql import SparkSession, DataFrame
+from utils.sql_utils import SafeSQL, unpacked
+
+from constants import LOAN_API_URL, SUPPORTED_EXTENSIONS
+from components.transformers import TRANSFORMERS_MAP
 
 
 # Exception for missing MySQL Configurations
@@ -15,69 +18,62 @@ class MissingMySQLConfig(Exception):
         super().__init__(message)
 
 
-class EasySpark:
+class DataClient:
 
     """
-
     This is my detailed description.
 
-    The EasySpark class acts as a much simpler connector to a SparkSession.
+    The DataClient class acts as a much simpler connector to a SparkSession.
     This class contains the basic features required to perform ETL processes
     on the data in this application.
-
     """
 
-    def __init__(self, *, app_name: str, log: str, config: dict) -> None:
+    def __init__(
+        self,
+        spark: SparkSession,
+        sql: SafeSQL,
+        config: dict
+    ) -> None:
 
-        # Ensure that the environment variable is set to Python 3.10.0
-        os.environ["PYSPARK_PYTHON"] = config['pyspark_python']
-        self.verify_version(config['pyspark_python'])
-
-        # Create the SparkSession builder
-        builder = SparkSession.builder.appName(app_name)
-
-        # Configure the builder with mysql if provided
-        if config.get('mysql_jar'):
-            builder.config("spark.jars", config['mysql_jar'])
-
-        # Create the SparkSession
-        self.spark = builder.getOrCreate()
-
-        # Set the log level
-        self.spark.sparkContext.setLogLevel(log.upper())
-
-        # Save the configurations
+        # Save the SparkSession as an attribute
+        self.spark = spark
+        self.sql = sql
         self.config = config
 
-    # Print a warning if the python version being run is not 3.8-3.11
-    def verify_version(self, pyspark_python: str) -> None:
+    # Perform ETL on the json files and endpoint, saving output into MySQL
+    def pipeline(self) -> None:
 
-        # Retrieve the version running the script
-        full_app_version = sys.version[:6]
+        """
+        Functional Requirement 1.1
 
-        # Retrieve the version running the SparkSession
-        completed_process = subprocess.run(
-            [pyspark_python, '--version'],
-            stdout=subprocess.PIPE,
-            text=True
-        )
-        full_pyspark_version = completed_process.stdout[-7:]
+        Extracts, transforms, and loads data from json files and an api
+        into Pyspark DataFrames.
+        """
 
-        # Extract the version number from the full versions
-        app_ver = int(full_app_version[2:4])
-        pyspark_ver = int(full_pyspark_version[2:4])
+        # Gather all data files of the supported file extensions
+        data_files = [
+            file
+            for ext in SUPPORTED_EXTENSIONS
+            for file in glob.glob(f"application_data/*{ext}")
+        ]
 
-        # Check if either version is not fully compatible
-        if not (8 <= app_ver <= 11 and 8 <= pyspark_ver <= 11):
-            ans = input(
-                "\nOne or more incompatible Python versions:" +
-                f"\nApplication Version: {full_app_version}" +
-                f"\nPySpark Version: {full_pyspark_version}" +
-                "\nReccomended Versions: 3.8-3.11" +
-                "\nWould you like to continue? Y | N\n"
-            )
-            if ans.lower().strip() == "n":
-                exit(0)
+        # Read each file into a DataFrame, save each in a dictionary
+        df_map = self.load_files(*data_files)
+
+        # For each DataFrame, retrieve and call the corresponding transformer
+        for filename in df_map.keys():
+            transformer = TRANSFORMERS_MAP[filename]
+            df_map[filename] = transformer(df_map[filename])
+
+        # Make a get request to the loan endpoint and save as DataFrame
+        loan_df = self.get(LOAN_API_URL)
+
+        # Add the loan DataFrame to the df_map
+        df_map.update({'cdw_sapp_loan_application': loan_df})
+
+        # Write each DataFrame to the mysql table that matches the filename
+        for name, df in df_map.items():
+            self.mysql_write(name, df)
 
     # Retrieve JSON from an api endpoint and return it as a DataFrame
     def get(self, api: str) -> DataFrame:
@@ -91,6 +87,30 @@ class EasySpark:
         df = self.spark.read.json(rdd)
 
         return df
+
+    def query(self, flag: str, params: tuple) -> None:
+
+        """
+        The DataClient.query method parses the cli_script.sql file using
+        the flag passed and inserts the parameters passed into the query.
+        After running and committing, the query results are unpacked and
+        returned.
+        """
+
+        # Run the appropriate query and save the data
+        data = self.sql.parse_file(
+            'sql_scripts/cli_script.sql',
+            flag=flag,
+            params=params
+        )
+
+        # Commit the query to the database
+        self.sql.commit()
+
+        # Unpack the data, removing empty iterables
+        data = unpacked(data, remove_empty=True)
+
+        return data
 
     # Safely read data from a json file or python object into a dataframe
     def file_to_df(self, fp: str) -> DataFrame:
@@ -108,14 +128,12 @@ class EasySpark:
             print(f"Error occured while reading file: {fp}")
             print(f"{type(err).__name__}: {err}")
 
-    def load_files(self, *filepaths: str, rtype: type) -> Iterable[DataFrame]:
+    def load_files(self, *filepaths: str) -> Iterable[DataFrame]:
 
         """
-
         This method takes any number of filepaths, converts each to a
         dataframe, and returns each dataframe in the form of a specified
         Iterable object.
-
         """
 
         dataframes, filenames = [], []
@@ -129,14 +147,7 @@ class EasySpark:
         print(f"{len(dataframes)} files loaded.")
 
         # Return a dictionary in the format: {filename: df}
-        if rtype == dict:
-            output = dict(zip(filenames, dataframes))
-        # Return the df list as any other Iterable
-        elif rtype in (list, tuple, set):
-            output = rtype(dataframes)
-        else:
-            print(f"EasySpark.load_files() | Incompatible data type: {rtype}")
-            return
+        output = dict(zip(filenames, dataframes))
 
         return output
 
@@ -207,7 +218,7 @@ if __name__ == "__main__":
         config = json.load(f)
 
     # Create an EasySpark Session
-    espark = EasySpark(
+    dc = DataClient(
         app_name="SBA345",
         log="FATAL",
         config=config

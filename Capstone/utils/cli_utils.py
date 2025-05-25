@@ -1,74 +1,11 @@
-# Prompt user with enumerate options and validates input
-def enumchoices(text: str, options: dict[str]) -> any:
-
-    # Format the multiple choice options as index: option \n index: option...
-    keys, fullprompt = [], ""
-
-    for index, option in enumerate(options.keys()):
-        keys.append((index, option))
-        fullprompt += f"{index}: {option}\n"
-
-    keys = dict(keys)
-
-    ans = input(f"{text}\n{fullprompt}\n")
-
-    # Prompt the user until the input is valid
-    while not ans.isdigit() or not (0 <= int(ans) < len(options)):
-        ans = input(f"Please choose a valid option:\n{fullprompt}")
-
-    return options[keys[int(ans)]]
-
-
-# Prompts user for a single inputs, tests all constraints
-def prompt(text: str, **constraints: any) -> str:
-
-    # Return false if any validation test specified fails
-    def validate(ans: str):
-        for test, value in constraints.items():
-            try:
-                match test:
-                    # Ensures the input is of the type specified
-                    case "type":
-                        value(ans)
-                    # Ensures input is of the length specified
-                    case "length":
-                        if len(ans) not in value:
-                            return False
-                    # Ensures the value is within the range specified
-                    case "value":
-                        if int(ans) not in value:
-                            return False
-                    # Pass the input through a custom validation function
-                    case "custom":
-                        if not value(ans):
-                            return False
-                    case _:
-                        continue
-            except Exception:
-                return False
-        return True
-
-    ans = input(f"{text}\n")
-
-    # Prompt the user until the input meets all validations
-    while not validate(ans):
-        ans = input("Please enter a valid input:\n")
-
-    return ans
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-
-class UIComponent:
+class CLIComponent:
 
     """
-
-    This is the parent class of all UIComponents, taking an id and keyword
+    This is the parent class of all CLIComponents, taking an id and keyword
     arguments. Takes optional positional arguments components and keyword
     arguments properties.
 
-    *components = UIComponent subclass
-
+    *components = CLIComponent subclass
     """
 
     def __init__(self, *components: object, **properties: any) -> None:
@@ -80,25 +17,88 @@ class UIComponent:
     def __getitem__(self, key: str) -> any:
         return self.props.get(key)
 
+    @staticmethod
+    def enumchoices(text: str, options: dict[str]) -> any:
+
+        """
+        Prompts the user with enumerated options and validates input
+        """
+
+        # Format the multiple choice options
+        keys, enum_options = [], ""
+
+        for index, option in enumerate(options.keys()):
+            keys.append((index, option))
+            enum_options += f"{index}: {option}\n"
+
+        keys = dict(keys)
+
+        ans = input(f"{text}\n{enum_options}\n")
+
+        # Prompt the user until the input is valid
+        while not ans.isdigit() or not (0 <= int(ans) < len(options)):
+            ans = input(f"Please choose a valid option:\n{enum_options}")
+
+        return options[keys[int(ans)]]
+
+    @staticmethod
+    def prompt(text: str, **constraints: any) -> str:
+
+        """
+        Prompts user for a single inputs, tests all constraints
+        """
+
+        # Prompt the user until input is valid
+        while True:
+
+            ans = input(f"{text}\n")
+
+            # Test each constraint specified
+            for test, value in constraints.items():
+                try:
+                    match test:
+                        # Ensures the input is of the type specified
+                        case "type":
+                            value(ans)
+                        # Ensures input is of the length specified
+                        case "length":
+                            if len(ans) not in value:
+                                continue
+                        # Ensures the value is within the range specified
+                        case "value":
+                            if int(ans) not in value:
+                                continue
+                        # Pass the input through a custom validation function
+                        case "custom":
+                            if not value(ans):
+                                continue
+                        case _:
+                            continue
+                except Exception:
+                    continue
+
+            # Break loop if all constraint's are met
+            break
+
+        return ans
+
     def run(self) -> tuple[str, any]:
         pass
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-class MenuDivider(UIComponent):
+class MenuDivider(CLIComponent):
 
     """
+    Params:
+        id: str
+        *components: CLIComponent
+        pass_values: callable
 
-        Params:
-            id: str
-            *components: UIComponent
-            pass_values: callable
-
-        The MenuDivider UIComponent runs each component within it and passes a
-        tuple containing the output of each component to the specified
-        pass_values function.
-
+    The MenuDivider CLIComponent runs each component within it and passes a
+    tuple containing the output of each component to the specified
+    pass_values function.
     """
 
     def run(self) -> dict[str: any]:
@@ -122,52 +122,52 @@ class MenuDivider(UIComponent):
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-class MultipleChoice(UIComponent):
+class MultipleChoice(CLIComponent):
 
     """
+    Params:
+        id: str
+        prompt: str
+        options: dict[str: CLIComponent | any]
 
-        Params:
-            id: str
-            prompt: str
-            options: dict[str: UIComponent | any]
-
-        The MultipleChoice UIComponent presents a multiple choice prompt to
-        the user. Returns a tuple in the format (id: str, selection: any).
-
+    The MultipleChoice CLIComponent presents a multiple choice prompt to
+    the user. Returns a tuple in the format (id: str, selection: any).
     """
 
     def run(self) -> dict[str: any]:
         while True:
-            selection = enumchoices(self['prompt'], self['options'])
+
+            selection = self.enumchoices(self['prompt'], self['options'])
             # Run the selection before returning if it is a UICompnent
-            if issubclass(type(selection), UIComponent):
+            if issubclass(type(selection), CLIComponent):
                 selection = selection.run()
+
             output = {self['id']: selection} if self['id'] else selection
+
             if self['pass_values']:
                 self['pass_values'](output)
+
             if not self['root']:
                 return output
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-class UserInput(UIComponent):
+class UserInput(CLIComponent):
 
     """
+    Params:
+        id: str = None
+        prompt: str
+        **properties: any
 
-        Params:
-            id: str = None
-            prompt: str
-            **properties: any
-
-        The UserInput UIComponent prompts the user for input and validates the
-        input based on the properties passed.
-
+    The UserInput CLIComponent prompts the user for input and validates the
+    input based on the properties passed.
     """
 
     # Prompts the user for input, validating with properties
     def run(self) -> dict[str: any]:
-        ans = prompt(self['prompt'], **self.props)
+        ans = self.prompt(self['prompt'], **self.props)
         return {self['id']: ans} if self['id'] else ans
 
 # ---------------------------------------------------------------------------------------------------------------------

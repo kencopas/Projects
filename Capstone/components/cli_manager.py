@@ -1,37 +1,138 @@
 from datetime import datetime
 
+import pandas as pd
+
 from utils.sql_utils import SafeSQL
 from utils.cli_utils import MultipleChoice, UserInput, MenuDivider
 
 
-# Validate a date input format
-def valid_date(user_input: str):
-
-    # Extract the tokens from the date and cast each to an int
-    tokens = [int(t) for t in user_input.split('-')]
-
-    # Unpack the tokens and assign the day to 1 by default
-    if len(tokens) == 2:
-        month, year, day = tokens+[1]
-    else:
-        month, day, year = tokens
-
-    # Attempt to convert the date to a datetime and validate the year
-    try:
-        datetime(year, month, day)
-        return year <= 2025
-    except Exception:
-        return False
-
-
 class CLIManager:
 
-    def __init__(self, app: object):
+    def __init__(self, dc: object):
 
-        self.app = app
+        self.dc = dc
 
         # Build the menu
         self.build_menu()
+
+    def cli_query(self, path: tuple):
+
+        """
+        The CLI-query method takes the CLI path and tracks where the user
+        navigated to in the menu, determining which flag to use to correspond
+        to the correct sql query in the cli_script.sql file. Once the
+        navigation has been tracked, the user's choices and inputs are
+        extracted from the path and used to construct the parameters for the
+        query. The flag and parameters are passed to the DataClient.query
+        method and the result is formatted and displayed.
+        """
+
+        # Release limits on max columns and rows and display width
+        pd.set_option("display.max_columns", None)
+        pd.set_option("display.max_rows", None)
+        pd.set_option('display.width', 150)
+
+        # Extract the component id and remaining selections
+        component_id, selections = list(path.items())[0]
+
+        # Route to the correct component
+        match component_id:
+            case 'view_transactions':
+
+                cust_zip = selections['zip']
+                mm, yyyy = selections['date'].split('-')
+
+                params = (cust_zip, f'{yyyy}{mm}')
+
+            case 'customers_nav':
+                component_id, selections = list(selections.items())[0]
+
+                # Route to the correct query within the customers component
+                match component_id:
+                    case "view_account":
+
+                        SSN = selections['SSN']
+
+                        params = (SSN,)
+
+                    case "modify_account":
+
+                        SSN = selections['SSN']
+                        attr = selections['attribute']
+                        new_val = selections['new_value']
+
+                        params = (attr, new_val, SSN, SSN)
+
+                    case 'generate_bill':
+
+                        ccn = selections['CCN']
+                        mm, yyyy = selections['date'].split('-')
+
+                        params = (ccn, f"{yyyy}{mm}")
+
+                    case 'transactions_timeframe':
+
+                        SSN = selections['SSN']
+                        start = selections['start_date'].split('-')
+                        end = selections['end_date'].split('-')
+
+                        # Format the start and end date as YYYYMMDD
+                        fstart = f"{start[2]}{start[0]}{start[1]}"
+                        fend = f"{end[2]}{end[0]}{end[1]}"
+
+                        params = (SSN, fstart, fend)
+
+                    case _:
+                        print("Unknown: Application.cli_query.customers_nav")
+
+            case _:
+                print(f"Unknown: Application.cli_query: {component_id}")
+
+        # Query the data with the DataClient
+        data = self.dc.query(component_id.upper(), params)
+
+        # If the query came back empty, print a message and return
+        if not data:
+            print("\nNo matching records.\n")
+            return
+
+        # Construct a DataFrame from the data
+        df = pd.DataFrame(data[1:], columns=data[0])
+
+        # Sort the DataFrame by timestamp if the column exists
+        if 'Date' in df.columns:
+            df = df.sort_values(by='Date', ascending=False)
+
+        # Print the dataframe
+        print(df)
+
+        # Total value if the value column exists
+        if 'Value' in df.columns:
+            total_value = round(df['Value'].sum(), 2)
+            print(f"\nTotal: {total_value}")
+
+    @staticmethod
+    def valid_date(user_input: str):
+
+        """
+        Validates a date input with tokens separated by a '-'
+        """
+
+        # Extract the tokens from the date and cast each to an int
+        tokens = [int(t) for t in user_input.split('-')]
+
+        # Unpack the tokens and assign the day to 1 by default
+        if len(tokens) == 2:
+            month, year, day = tokens+[1]
+        else:
+            month, day, year = tokens
+
+        # Attempt to convert the date to a datetime and validate the year
+        try:
+            datetime(year, month, day)
+            return year <= 2025
+        except Exception:
+            return False
 
     # Build the menu by component
     def build_menu(self) -> None:
@@ -49,10 +150,10 @@ class CLIManager:
                 id='date',
                 prompt="Please enter a month and year (MM-YYYY): ",
                 length=[7],
-                custom=valid_date
+                custom=self.valid_date
             ),
             id='view_transactions',
-            pass_values=self.app.cli_query
+            pass_values=self.cli_query
         )
 
         # Modify Account (Divider)
@@ -101,7 +202,7 @@ class CLIManager:
                 id="date",
                 prompt="Please enter the date (MM-YYYY): ",
                 length=[7],
-                custom=valid_date
+                custom=self.valid_date
             ),
             id='generate_bill'
         )
@@ -119,13 +220,13 @@ class CLIManager:
                 id="start_date",
                 prompt="Please enter the starting date (MM-DD-YYYY)",
                 length=[10],
-                custom=valid_date
+                custom=self.valid_date
             ),
             UserInput(
                 id="end_date",
                 prompt="Please enter the ending date (MM-DD-YYYY)",
                 length=[10],
-                custom=valid_date
+                custom=self.valid_date
             ),
             id="transactions_timeframe",
         )
@@ -153,7 +254,7 @@ class CLIManager:
                 "Display Transactions by Timeframe": transactions_timeframe_div
             },
             id='customers_nav',
-            pass_values=self.app.cli_query
+            pass_values=self.cli_query
         )
 
         # Main Menu (Navigator)
@@ -162,7 +263,7 @@ class CLIManager:
             root=True,
             id='menu_nav',
             prompt=(
-                "\nWelcome to the Loan Application Interface!"
+                "\nWelcome to the Loan dclication Interface!"
                 "\nWould you like to view transcation or customer details?"
             ),
             options={
