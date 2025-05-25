@@ -25,6 +25,7 @@ class Application:
         # Create the SparkSession
         self.spark = SparkSession.builder \
             .appName(app_name) \
+            .config("spark.jars", self.config['mysql_jar']) \
             .config("spark.driver.bindAddress", "127.0.0.1") \
             .config("spark.driver.host", "127.0.0.1") \
             .config("spark.driver.port", "4040") \
