@@ -3,6 +3,7 @@ from mysql.connector import Error
 from mysql.connector.types import RowType
 import json
 
+
 # Prompt user and validate input
 def prompt(text: str, options: tuple[str]) -> str:
 
@@ -13,20 +14,21 @@ def prompt(text: str, options: tuple[str]) -> str:
 
     return ans
 
+
 # Safe connection and cursor querying
 class SafeSQL:
 
     """
-    
+
     This class just simplifies MySQL operations with error handling
     and configuration.
-    
+
     """
-    
+
     def __init__(self, **kwargs) -> None:
 
         self.verbose = kwargs.pop('verbose', False)
-        
+
         # Attempt to connect to mysql local instance
         try:
             self.connector = mysql.connector.connect(**kwargs)
@@ -36,13 +38,19 @@ class SafeSQL:
 
         # Initialize cursor
         self.cursor = self.connector.cursor()
-        
+
         # Tracks error count and query count
         self.error_count = 0
         self.query_count = 0
 
-    # Safe query function, takes an sql script as text or a filepath, executes the contents, and returns a list of the results
     def run(self, sqlin: str) -> list[RowType] | list[list[RowType]]:
+
+        """
+
+        Safe query function, takes an sql script as text or a filepath,
+        executes the contents, and returns a list of the results.
+
+        """
 
         try:
             # Initialize list of outputs
@@ -75,14 +83,16 @@ class SafeSQL:
                 if self.cursor.description:
                     col_names = [desc[0] for desc in self.cursor.description]
                     output = [col_names]+output
-                
+
                 # Append the query results to outputs
                 outputs.append(output)
 
-            if self.verbose:
-                print(f"Executed {len(query_arr)} queries.\n{rowcount} rows affected.")
+            self.verbose and print(f"Executed {len(query_arr)} queries.\n{rowcount} rows affected.")
 
-            # Returns the list of outputs if multi-query, otherwise unpack and return
+            # Unpack the outputs list before returning
+            while len(outputs) == 1:
+                outputs = outputs[0]
+
             return outputs if len(outputs) > 1 else outputs[0]
 
         except Error as err:
@@ -101,7 +111,7 @@ class SafeSQL:
             if ans.lower() != "y":
                 print("Commit aborted.")
                 return
-            
+
         self.connector.commit()
         print(self.query_count, "queries committed.")
 
@@ -115,13 +125,13 @@ class SafeSQL:
             # Read the file contents
             with open(fp, 'r') as f:
                 contents = f.read()
-            
+
             # Split the file contents by the delimiter
             scripts = contents.split(delim)
             index = scripts.index(flag)
 
             # Get the target script and split by parameter flag
-            script = scripts[index+1].split('%p')
+            script = scripts[index+1].split(r'{}')
 
             # Join the script back together putting each parameter in place in order
             full_script = ''.join([line+str(param) for line, param in zip(script, params+('',))])
@@ -139,6 +149,7 @@ class SafeSQL:
 
         self.cursor.close()
         self.connector.close()
+
 
 if __name__ == "__main__":
 

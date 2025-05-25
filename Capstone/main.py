@@ -69,44 +69,40 @@ class Application:
 
         # Route to the correct component
         match component_id:
-            case 'transactions_div':
+            case 'view_transactions':
 
                 cust_zip = selections['tzip']
                 mm, yyyy = selections['tdate'].split('-')
 
-                flag = 'VIEW_TRANSACTIONS'
                 params = (cust_zip, f'{yyyy}{mm}')
 
             case 'customers_nav':
-                nav, selections = list(selections.items())[0]
+                component_id, selections = list(selections.items())[0]
 
                 # Route to the correct query within the customers component
-                match nav:
+                match component_id:
                     case "view_account":
 
                         SSN = selections['SSN']
 
-                        flag = 'VIEW_ACCOUNT'
                         params = (SSN,)
                     
-                    case "modify_account_div":
+                    case "modify_account":
 
                         SSN = selections['SSN']
                         attr = selections['modify_attribute']
                         new_val = selections['modify_value']
 
-                        flag = 'MODIFY_ACCOUNT'
                         params = (attr, new_val, SSN, SSN)
 
-                    case 'generate_bill_div':
+                    case 'generate_bill':
 
                         ccn = selections['CCN']
                         mm, yyyy = selections['gbdate'].split('-')
 
-                        flag = 'GENERATE_BILL'
                         params = (ccn, f"{yyyy}{mm}")
 
-                    case 'transactions_timeframe_div':
+                    case 'transactions_timeframe':
 
                         SSN = selections['SSN']
                         start = selections['tstartdate'].split('-')
@@ -116,7 +112,6 @@ class Application:
                         fstart = f"{start[2]}{start[0]}{start[1]}"
                         fend = f"{end[2]}{end[0]}{end[1]}"
 
-                        flag = 'TRANSACTIONS_TIMEFRAME'
                         params = (SSN, fstart, fend)
 
                     case _:
@@ -125,14 +120,15 @@ class Application:
             case _:
                 print(f"unknown: Application.cli_query: {component_id}")
 
-        # Release limits on max columns and rows
+        # Release limits on max columns and rows and display width
         pd.set_option("display.max_columns", None)
         pd.set_option("display.max_rows", None)
+        pd.set_option('display.width', 150)
         
         # Run the appropriate query and save the data
         data = self.ssql.parse_file(
             'sql_scripts/cli_script.sql',
-            flag=flag,
+            flag=component_id.upper(),
             params=params
         )
 
@@ -142,19 +138,19 @@ class Application:
         # Remove all empty lists from the data
         data = list(filter(bool, data))
 
-        # Unpack the data if it is unnecessarily nested
-        if len(data) == 1:
-            data = data[0]
-
         # Construct a DataFrame from the data
         df = pd.DataFrame(data[1:], columns=data[0])
+
+        # Sort the DataFrame by timestamp if the column exists
+        if 'Date' in df.columns:
+            df = df.sort_values(by='Date', ascending=False)
 
         # Print the dataframe
         print(df)
 
         # Total value if the value column exists
         if 'Value' in df.columns:
-            total_value = df['Value'].sum()
+            total_value = round(df['Value'].sum(), 2)
             print(f"\nTotal: {total_value}")
 
     # Loads the config.json file into the config attribute

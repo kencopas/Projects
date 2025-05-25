@@ -43,7 +43,7 @@ class CLIManager:
         transactions_div = MenuDivider(
             UserInput(id='tzip', prompt="Please enter a zipcode (5 digits): ", type=int, length=[5]),
             UserInput(id='tdate', prompt="Please enter a month and year (MM-YYYY): ", length=[7], custom=valid_date),
-            id='transactions_div',
+            id='view_transactions',
             pass_values=self.app.cli_query
         )
 
@@ -56,14 +56,14 @@ class CLIManager:
                 options=self.CUST_SCHEMA_KEY
             ),
             UserInput(id='modify_value', prompt="What would you like to update the value to? "),
-            id='modify_account_div'
+            id='modify_account'
         )
 
         # Generate Monthly Bill (Divider) - Prompts user for Credit Card Number and month-date timestamp
         generate_bill_div = MenuDivider(
             UserInput(id="CCN", prompt="Please enter the credit card number: ", type=int, length=[16]),
             UserInput(id="gbdate", prompt="Please enter the month and year (MM-YYYY): ", length=[7], custom=valid_date),
-            id='generate_bill_div'
+            id='generate_bill'
         )
 
         # Transactions Timeframe (Divider) - Prompts user for month-day-year timestamps for start and end dates
@@ -71,7 +71,7 @@ class CLIManager:
             UserInput(id='SSN', prompt="Please enter the Social Security Number (9 digits): ", type=int, length=[9]),
             UserInput(id="tstartdate", prompt="Please enter the year, month, and day of the starting date (MM-DD-YYYY)", length=[10], custom=valid_date),
             UserInput(id="tenddate", prompt="Please enter the year, month, and day of the ending date (MM-DD-YYYY)", length=[10], custom=valid_date),
-            id="transactions_timeframe_div",
+            id="transactions_timeframe",
         )
 
         view_account_div = MenuDivider(
