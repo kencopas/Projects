@@ -104,11 +104,11 @@ class MenuDivider(UIComponent):
     def run(self) -> dict[str: any]:
 
         # Construct a selections dictionary
-        selections = dict()
-        for ui in self.components:
-            ui_output = ui.run()
-            print(ui_output)
-            selections.update(ui_output)
+        selections = {
+            k: v
+            for ui in self.components
+            for k, v in ui.run().items()
+        }
 
         # Format the output as (id, selections_dict) if there is an id
         output = {self['id']: selections} if self['id'] else selections

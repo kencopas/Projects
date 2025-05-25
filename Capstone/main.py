@@ -1,10 +1,15 @@
-from pyspark.sql.functions import col, lower, concat, lit, substring, lpad
-from pyspark.sql import DataFrame
-from utils.spark_utils import EasySpark
-from utils.sql_utils import SafeSQL
-from cli_manager import CLIManager
 import json
+import glob
+
 import pandas as pd
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import col, lower, concat, lit, substring, lpad
+
+from utils.spark_utils import EasySpark
+from utils.sql_utils import SafeSQL, unpacked
+from cli_manager import CLIManager
+from constants import LOAN_API_URL, SUPPORTED_EXTENSIONS
+
 
 class Application:
 
@@ -37,8 +42,7 @@ class Application:
         query_output = self.ssql.run("sql_scripts/init.sql")
         self.ssql.commit()
 
-        # If the last sql query did not return any rows, extract, transform, and load the customer data into the database
-        print(query_output)
+        # If the last sql query did not return any rows, run the pipeline
         if not query_output[-1]:
             self.pipeline()
 
@@ -49,11 +53,11 @@ class Application:
     def run_cli(self):
         self.cli = CLIManager(self)
         self.cli.run()
-    
-    def cli_query(self, path: tuple):
+
+    def cli_query(self, path: tuple) -> None:
 
         """
-        
+
         The CLI-query method takes the CLI path and tracks where the user
         navigated to in the menu, determining which flag to use to correspond
         to the correct sql query in the cli_script.sql file. Once the
@@ -61,7 +65,7 @@ class Application:
         extracted from the path and used to construct the parameters for the
         query. After the query is run, the output is saved and displayed in
         a DataFrame.
-        
+
         """
 
         # Extract the component id and remaining selections
@@ -71,8 +75,8 @@ class Application:
         match component_id:
             case 'view_transactions':
 
-                cust_zip = selections['tzip']
-                mm, yyyy = selections['tdate'].split('-')
+                cust_zip = selections['zip']
+                mm, yyyy = selections['date'].split('-')
 
                 params = (cust_zip, f'{yyyy}{mm}')
 
@@ -86,27 +90,27 @@ class Application:
                         SSN = selections['SSN']
 
                         params = (SSN,)
-                    
+
                     case "modify_account":
 
                         SSN = selections['SSN']
-                        attr = selections['modify_attribute']
-                        new_val = selections['modify_value']
+                        attr = selections['attribute']
+                        new_val = selections['new_value']
 
                         params = (attr, new_val, SSN, SSN)
 
                     case 'generate_bill':
 
                         ccn = selections['CCN']
-                        mm, yyyy = selections['gbdate'].split('-')
+                        mm, yyyy = selections['date'].split('-')
 
                         params = (ccn, f"{yyyy}{mm}")
 
                     case 'transactions_timeframe':
 
                         SSN = selections['SSN']
-                        start = selections['tstartdate'].split('-')
-                        end = selections['tenddate'].split('-')
+                        start = selections['start_date'].split('-')
+                        end = selections['end_date'].split('-')
 
                         # Format the start and end date as YYYYMMDD
                         fstart = f"{start[2]}{start[0]}{start[1]}"
@@ -115,16 +119,16 @@ class Application:
                         params = (SSN, fstart, fend)
 
                     case _:
-                        print("Unknown Application.cli_query.customers_nav")
+                        print("Unknown: Application.cli_query.customers_nav")
 
             case _:
-                print(f"unknown: Application.cli_query: {component_id}")
+                print(f"Unknown: Application.cli_query: {component_id}")
 
         # Release limits on max columns and rows and display width
         pd.set_option("display.max_columns", None)
         pd.set_option("display.max_rows", None)
         pd.set_option('display.width', 150)
-        
+
         # Run the appropriate query and save the data
         data = self.ssql.parse_file(
             'sql_scripts/cli_script.sql',
@@ -135,8 +139,15 @@ class Application:
         # Commit the query to the database
         self.ssql.commit()
 
-        # Remove all empty lists from the data
-        data = list(filter(bool, data))
+        # Unpack the data, removing empty iterables
+        data = unpacked(data, remove_empty=True)
+
+        # If the query came back empty, print a message and return
+        if not data:
+            values = [f"{attr}: {val}" for attr, val in selections.items()]
+            print("\nNo records matching the following values:\n")
+            print("\n".join(values))
+            return
 
         # Construct a DataFrame from the data
         df = pd.DataFrame(data[1:], columns=data[0])
@@ -166,12 +177,13 @@ class Application:
     def pipeline(self) -> None:
 
         """
-        
+
         Functional Requirement 1.1
 
-        Loads, transforms, and saves data from json format into Pyspark DataFrames
+        Extracts, transforms, and loads data from json files and an api
+        into Pyspark DataFrames.
 
-        Customer DataFrame - 
+        Customer DataFrame -
 
             MIDDLE_NAME -> lowercase
             FULL_STREET_ADDRESS -> <STREET_NAME>, <APT_NO>
@@ -184,26 +196,28 @@ class Application:
             BRANCH_ZIP -> default=999999
             BRANCH_PHONE -> (XXX)XXX-XXXX
 
-        Credit Card DataFrame - 
+        Credit Card DataFrame -
 
             CREDIT_CARD_NO -> rename CUST_CC_NO
             TIMEID -> YYYYMMDD
             YEAR -> drop
             MONTH -> drop
             DAY -> drop
-        
-        """
-        
-        # Convert each file into a dataframe and save the output as a dictioanry
-        df_map = self.espark.load_files(
-            r"data/cdw_sapp_branch.json",
-            r"data/cdw_sapp_credit_card.json",
-            r"data/cdw_sapp_customer.json",
-            rtype=dict
-        )
 
-        # Retrieve the api response from the loan dataset endpoint as a DataFrame
-        loan_df = self.espark.api_to_df(r"https://raw.githubusercontent.com/platformps/LoanDataset/main/loan_data.json")
+        """
+
+        # Gather all data files of the supported file extensions
+        data_files = [
+            file
+            for ext in SUPPORTED_EXTENSIONS
+            for file in glob.glob(f"application_data/*{ext}")
+        ]
+
+        # Read each file into a DataFrame, save each in a dictionary
+        df_map = self.espark.load_files(*data_files, rtype=dict)
+
+        # Make a get request to the loan endpoint and save as DataFrame
+        loan_df = self.espark.get(LOAN_API_URL)
 
         # Add the loan DataFrame to the df_map
         df_map.update({'cdw_sapp_loan_application': loan_df})
@@ -219,7 +233,7 @@ class Application:
                 lit("-"), substring(col("CUST_PHONE").cast("string"), 4, 4)
             )) \
             .drop("APT_NO").drop("STREET_NAME")
-        
+
         # Transform Branch DataFrame
         df_map['cdw_sapp_branch'] = df_map['cdw_sapp_branch'] \
             .fillna({"BRANCH_ZIP": "999999"}) \
@@ -238,8 +252,8 @@ class Application:
                 lpad(col("DAY").cast("string"), 2, "0")
             )) \
             .drop("YEAR").drop("MONTH").drop("DAY")
-        
-        # This works because the filenames directly correspond to the MySQL table names
+
+        # Write each DataFrame to the mysql table that matches the filename
         for name, df in df_map.items():
             self.espark.mysql_write(name, df)
 

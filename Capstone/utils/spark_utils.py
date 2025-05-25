@@ -80,7 +80,7 @@ class EasySpark:
                 exit(0)
 
     # Retrieve JSON from an api endpoint and return it as a DataFrame
-    def api_to_df(self, api: str) -> DataFrame:
+    def get(self, api: str) -> DataFrame:
 
         # Ping the api and save the json response
         response = requests.get(api)

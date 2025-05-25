@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 import mysql.connector
 from mysql.connector import Error
 from mysql.connector.types import RowType
@@ -13,6 +15,27 @@ def prompt(text: str, options: tuple[str]) -> str:
         ans = input(f"Please choose a valid option: {options}")
 
     return ans
+
+
+# Unpacking function
+def unpacked(data: Iterable, *, remove_empty: bool = False) -> Iterable:
+
+    # Remove empty iterables if specified
+    if remove_empty:
+        data = list(filter(bool, data))
+
+    # While unpackable, unpack
+    while (
+        len(data) == 1
+        and isinstance(data[0], Iterable)
+        and not isinstance(data[0], (str, bytes))
+    ):
+        data = data[0]
+        if remove_empty:
+            data = list(filter(bool, data))
+
+    # Return unpacked data
+    return data
 
 
 # Safe connection and cursor querying
@@ -53,20 +76,20 @@ class SafeSQL:
         """
 
         try:
+
             # Initialize list of outputs
             outputs = []
             rowcount = 0
 
-            # If a filepath is passed, read the file contents into the content variable
+            # Detect with argument is a filepath or sql query
             if len(sqlin) > 4 and sqlin[-4:] == ".sql":
                 # Read file contents
                 with open(sqlin, 'r') as f:
                     content = f.read()
-            # Otherwise, assign the sqlin to content
             else:
                 content = sqlin
 
-            # If multiple queries are passed, filter out whitespace and newlines, extract list of query strings
+            # Split potential multiquery into single queries by semicolon
             query_arr = [q.strip() for q in content.split(';') if q.strip()]
 
             # Run each query and append the result to the outputs
@@ -77,23 +100,23 @@ class SafeSQL:
                 self.query_count += 1
                 rowcount += self.cursor.rowcount
 
+                # Fetch all the returned rows
                 output = self.cursor.fetchall()
 
                 # Retrieve the column names and insert them into the output
-                if self.cursor.description:
+                if self.cursor.description and output:
                     col_names = [desc[0] for desc in self.cursor.description]
-                    output = [col_names]+output
+                    output.insert(0, col_names)
 
                 # Append the query results to outputs
                 outputs.append(output)
 
             self.verbose and print(f"Executed {len(query_arr)} queries.\n{rowcount} rows affected.")
 
-            # Unpack the outputs list before returning
-            while len(outputs) == 1:
-                outputs = outputs[0]
+            # unpacked the outputs list before returning
+            unpacked(outputs)
 
-            return outputs if len(outputs) > 1 else outputs[0]
+            return outputs
 
         except Error as err:
 
