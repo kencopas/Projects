@@ -48,10 +48,10 @@ class CLIComponent:
         Prompts user for a single inputs, tests all constraints
         """
 
+        ans = input(f"{text}\n")
+
         # Prompt the user until input is valid
         while True:
-
-            ans = input(f"{text}\n")
 
             # Test each constraint specified
             for test, value in constraints.items():
@@ -63,22 +63,23 @@ class CLIComponent:
                         # Ensures input is of the length specified
                         case "length":
                             if len(ans) not in value:
-                                continue
+                                break
                         # Ensures the value is within the range specified
                         case "value":
                             if int(ans) not in value:
-                                continue
+                                break
                         # Pass the input through a custom validation function
                         case "custom":
                             if not value(ans):
-                                continue
+                                break
                         case _:
                             continue
                 except Exception:
-                    continue
+                    break
+            else:
+                break
 
-            # Break loop if all constraint's are met
-            break
+            ans = input(f"\nInvalid Input.\n\n{text}\n")
 
         return ans
 

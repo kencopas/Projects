@@ -263,7 +263,7 @@ class CLIManager:
             root=True,
             id='menu_nav',
             prompt=(
-                "\nWelcome to the Loan dclication Interface!"
+                "\nWelcome to the Loan Application Interface!"
                 "\nWould you like to view transcation or customer details?"
             ),
             options={
