@@ -7,8 +7,8 @@ import requests
 from pyspark.sql import SparkSession, DataFrame
 from utils.sql import SafeSQL, unpacked
 
-from constants import LOAN_API_URL, SUPPORTED_EXTENSIONS
-from components.transformers import transformers_map
+from config.constants import LOAN_API_URL, SUPPORTED_EXTENSIONS
+from transformers import transformers_map
 
 
 # Exception for missing MySQL Configurations
@@ -62,7 +62,7 @@ class DataClient:
         data_files = [
             file
             for ext in SUPPORTED_EXTENSIONS
-            for file in glob.glob(f"application_data/*{ext}")
+            for file in glob.glob(f"data/*{ext}")
         ]
 
         # Read each file into a DataFrame, save each in a dictionary

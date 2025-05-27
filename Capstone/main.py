@@ -6,8 +6,8 @@ import subprocess
 from pyspark.sql import SparkSession
 
 from utils.sql import SafeSQL
-from components.menu import CLIManager
-from components.data_client import DataClient
+from app.menu import CLIManager
+from app.data_client import DataClient
 
 
 class Application:
@@ -87,7 +87,7 @@ class Application:
 
     # Loads the config.json file into the config attribute
     def load_config(self) -> None:
-        with open("macconfig.json") as f:
+        with open("config/config.json") as f:
             self.config = json.load(f)
 
 
