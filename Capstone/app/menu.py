@@ -5,12 +5,16 @@ import pandas as pd
 
 from utils.sql import SafeSQL
 from utils.cli import MultipleChoice, UserInput, MenuDivider
+from app.data_client import DataClient
 
 
 class CLIManager:
+    """
+    Manages the CLI built from the cli utility
+    """
 
-    def __init__(self, dc: object):
-
+    def __init__(self, dc: DataClient) -> None:
+        # Save the DataClient
         self.dc = dc
 
         # Build the menu

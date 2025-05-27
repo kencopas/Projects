@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession, DataFrame
 from utils.sql import SafeSQL, unpacked
 
 from config.constants import LOAN_API_URL, SUPPORTED_EXTENSIONS
-from transformers import transformers_map
+from app.transformers import transform
 
 
 # Exception for missing MySQL Configurations
@@ -69,9 +69,8 @@ class DataClient:
         df_map = self.load_files(*data_files)
 
         # For each DataFrame, retrieve and call the corresponding transformer
-        for filename in df_map.keys():
-            transformer = transformers_map[filename]
-            df_map[filename] = transformer(df_map[filename])
+        for filename, df in df_map.items():
+            df_map[filename] = transform(filename, df)
 
         # Make a get request to the loan endpoint and save as DataFrame
         loan_df = self.get(LOAN_API_URL)
@@ -107,7 +106,7 @@ class DataClient:
 
         # Run the appropriate query and save the data
         data = self.sql.parse_file(
-            'sql/cli_script.sql',
+            'sql/cli_scripts.sql',
             flag=flag,
             params=params
         )

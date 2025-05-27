@@ -11,9 +11,8 @@ from app.data_client import DataClient
 
 
 class Application:
-
     """
-    app
+    This application is an ETL Process Manager for a Bank Dataset
     """
 
     def __init__(self, app_name: str, *, log: str) -> None:

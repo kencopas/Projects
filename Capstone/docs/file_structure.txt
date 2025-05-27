@@ -1,27 +1,24 @@
-Capstone
-├── main.py
-├── requirements.txt
-├── .gitignore
-├── app/
-│   ├── data_client.py
-│   ├── menu.py
-│   └── transformers.py
-├── config/
-│   ├── config.json
-│   └── constants.py
-├── data/
-│   ├── cdw_sapp_branch.json
-│   ├── cdw_sapp_credit_card.json
-│   └── cdw_sapp_customer.json
-├── docs/
-│   ├── CAP350_Project_Specs.pdf
-│   ├── diagrams/  # Workflow Diagrams
-│   └── mapping/   # Mapping PDFs
-├── lib/
-│   └── mysql-connector-j-9.3.0.jar
-├── sql/
-│   ├── cli_script.sql
-│   └── init.sql
-└── utils/
-    ├── cli.py
-    └── sql.py
+Capstone Project Folder
+
+app/
+├── data_client.py
+├── menu.py
+└── transformers.py
+config/
+├── config.json
+└── constants.py
+data/
+docs/
+├── CAP350_Project_Specs.pdf
+├── diagrams/  # Workflow Diagrams
+└── mapping/   # Mapping PDFs
+lib/
+└── mysql-connector-j-9.3.0.jar
+main.py
+requirements.txt
+sql/
+├── cli_script.sql
+└── init.sql
+utils/
+├── cli.py
+└── sql.py

@@ -8,9 +8,10 @@ designated.
 """
 
 from pyspark.sql.functions import col, lower, concat, lit, substring, lpad
+from pyspark.sql import DataFrame
 
 
-def transform_customer(df):
+def transform_customer(df: DataFrame) -> DataFrame:
 
     """
     MIDDLE_NAME -> lowercase
@@ -40,7 +41,7 @@ def transform_customer(df):
         print(f"Exception occured: {e}")
 
 
-def transform_branch(df):
+def transform_branch(df: DataFrame) -> DataFrame:
 
     """
 
@@ -67,7 +68,7 @@ def transform_branch(df):
         print(f"Exception occured: {e}")
 
 
-def transform_credit(df):
+def transform_credit(df: DataFrame) -> DataFrame:
 
     """
 
@@ -101,3 +102,24 @@ transformers_map: dict[str: callable] = {
     'cdw_sapp_branch': transform_branch,
     'cdw_sapp_credit_card': transform_credit
 }
+
+
+def transform(filename: str, df: DataFrame) -> DataFrame:
+    """
+    Retrieves the correct transformer function that corresponds to the name of
+    the file from which the DataFrame was constructed and returns the
+    transformed DataFrame.
+    """
+
+    try:
+        # Retrieve the correct transformer function
+        transformer_function = transformers_map.get(filename)
+
+        # Call the transformer function on the DataFrame and return the output
+        return transformer_function(df)
+
+    except Exception as err:
+        print(
+            f"Error transforming file {filename}:"
+            f"\n\n{type(err).__name__}: {err}"
+        )

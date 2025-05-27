@@ -9,14 +9,29 @@ def project_tree(root_dir: str, *, ignore: list[str]) -> None:
     """
 
     project_name = os.path.basename(root_dir).title()
-    project = Node(project_name)
-    queue = [(root_dir, project)]
+    print(project_name)
+    print()
+
+    queue = []
+
+    dirs = glob.glob(rf"{root_dir}\*")
+    ignores = []
+    for name in ignore:
+        ignores.extend([dir for dir in dirs if name in dir])
+    for dir in dirs:
+        if dir in ignores:
+            continue
+        filename = os.path.basename(dir)
+        cur_node = Node(
+            filename
+        )
+        new_filepath = root_dir+"/"+filename
+        queue.append((new_filepath, cur_node))
+
+    root_nodes = [thing[1] for thing in queue]
 
     while queue:
         filepath, root = queue.pop()
-        if "pycache" in filepath:
-            continue
-        print(f"Filepath: {filepath}, Root: {root}")
         dirs = glob.glob(rf"{filepath}\*")
         ignores = []
         for name in ignore:
@@ -25,7 +40,6 @@ def project_tree(root_dir: str, *, ignore: list[str]) -> None:
             if dir in ignores:
                 continue
             filename = os.path.basename(dir)
-            print(f"Basename: {filename}")
             cur_node = Node(
                 filename,
                 parent=root
@@ -34,8 +48,9 @@ def project_tree(root_dir: str, *, ignore: list[str]) -> None:
             queue.append((new_filepath, cur_node))
 
     print()
-    for pre, fill, node in RenderTree(project):
-        print(f"{pre}{node.name}")
+    for root in root_nodes:
+        for pre, fill, node in RenderTree(root):
+            print(f"{pre}{node.name}")
 
 
 project_tree(
