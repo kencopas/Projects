@@ -149,6 +149,7 @@ class CLIManager:
     def root_output(self, values: dict):
         if values['menu_nav'] == "EXIT":
             print("\nThank you for using the Loan Application Interface!\n")
+            self.dc.stop()
             exit(0)
 
     # Build the menu by component

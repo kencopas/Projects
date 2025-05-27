@@ -21,7 +21,6 @@ class MissingMySQLConfig(Exception):
 class DataClient:
 
     """
-    This is my detailed description.
 
     The DataClient class acts as a much simpler connector to a SparkSession.
     This class contains the basic features required to perform ETL processes
@@ -216,6 +215,7 @@ class DataClient:
 
     def stop(self) -> None:
         self.spark.stop()
+        self.sql.close()
 
 
 if __name__ == "__main__":

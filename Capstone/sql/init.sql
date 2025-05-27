@@ -4,11 +4,6 @@ CREATE DATABASE IF NOT EXISTS creditcard_capstone;
 
 USE creditcard_capstone;
 
--- DEBUG | Drop all tables
--- DROP TABLE IF EXISTS CDW_SAPP_BRANCH;
--- DROP TABLE IF EXISTS CDW_SAPP_CUSTOMER;
--- DROP TABLE IF EXISTS CDW_SAPP_CREDIT_CARD;
--- Create Branch table
 -- Create Branch table
 CREATE TABLE
     IF NOT EXISTS CDW_SAPP_BRANCH (
