@@ -83,18 +83,14 @@ WHERE
 -- %%TRANSACTIONS_TIMEFRAME%%
 -- Select the transaction info for a customers transactions in a timeframe
 SELECT
-    cc.transaction_id 'Transaction ID',
-    cc.transaction_value 'Value',
-    cc.transaction_type 'Type',
-    cc.timeid 'Date',
-    cc.cust_cc_no 'CCN'
+    transaction_id 'Transaction ID',
+    transaction_value 'Value',
+    transaction_type 'Type',
+    timeid 'Date',
+    cust_cc_no 'CCN'
 FROM
-    cdw_sapp_credit_card cc
-LEFT JOIN
-    cdw_sapp_customer cust
-ON
-    cust.ssn = cc.cust_ssn
+    cdw_sapp_credit_card
 WHERE
-    cust.ssn = {}
-    AND cc.timeid >= {}
-    AND cc.timeid <= {};
+    cust_ssn = {}
+    AND timeid >= {}
+    AND timeid <= {};

@@ -96,7 +96,7 @@ def transform_credit(df):
 
 
 # Maps the data filenames to the corresponding transformer function
-TRANSFORMERS_MAP: dict[str: callable] = {
+transformers_map: dict[str: callable] = {
     'cdw_sapp_customer': transform_customer,
     'cdw_sapp_branch': transform_branch,
     'cdw_sapp_credit_card': transform_credit

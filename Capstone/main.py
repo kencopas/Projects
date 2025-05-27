@@ -3,10 +3,10 @@ import os
 import sys
 import subprocess
 
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import SparkSession
 
-from utils.sql_utils import SafeSQL
-from components.cli_manager import CLIManager
+from utils.sql import SafeSQL
+from components.menu import CLIManager
 from components.data_client import DataClient
 
 
@@ -41,16 +41,9 @@ class Application:
             host=self.config["host"]
         )
 
-        # Initialize the DataClient
+        # Initialize the DataClient and run the pipeline
         self.dc = DataClient(self.spark, self.sql, self.config)
-
-        # Initialize database tables and commit
-        query_output = self.sql.run("sql_scripts/init.sql")
-        self.sql.commit()
-
-        # If the last sql query did not return any rows, run the pipeline
-        if not query_output[-1]:
-            self.dc.pipeline()
+        self.dc.pipeline()
 
         # Initialize and run the CLIManager
         self.cli = CLIManager(self.dc)
@@ -97,11 +90,7 @@ class Application:
         with open("macconfig.json") as f:
             self.config = json.load(f)
 
-    # Read data from json into a dataframe
-    def json_read(self, json_file: str) -> DataFrame:
-        return self.espark.json_to_df(json_file)
-
 
 if __name__ == "__main__":
 
-    myapp = Application("Hello World!", log="OFF")
+    myapp = Application("Capstone ETL Manager", log="OFF")

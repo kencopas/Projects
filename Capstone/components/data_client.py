@@ -5,10 +5,10 @@ from collections.abc import Iterable
 
 import requests
 from pyspark.sql import SparkSession, DataFrame
-from utils.sql_utils import SafeSQL, unpacked
+from utils.sql import SafeSQL, unpacked
 
 from constants import LOAN_API_URL, SUPPORTED_EXTENSIONS
-from components.transformers import TRANSFORMERS_MAP
+from components.transformers import transformers_map
 
 
 # Exception for missing MySQL Configurations
@@ -50,6 +50,14 @@ class DataClient:
         into Pyspark DataFrames.
         """
 
+        # Initialize database tables and commit
+        query_output = self.sql.run("sql/init.sql")
+        self.sql.commit()
+
+        # If the last query returned any rows, terminate the pipeline
+        if query_output[-1]:
+            return
+
         # Gather all data files of the supported file extensions
         data_files = [
             file
@@ -62,7 +70,7 @@ class DataClient:
 
         # For each DataFrame, retrieve and call the corresponding transformer
         for filename in df_map.keys():
-            transformer = TRANSFORMERS_MAP[filename]
+            transformer = transformers_map[filename]
             df_map[filename] = transformer(df_map[filename])
 
         # Make a get request to the loan endpoint and save as DataFrame
@@ -99,7 +107,7 @@ class DataClient:
 
         # Run the appropriate query and save the data
         data = self.sql.parse_file(
-            'sql_scripts/cli_script.sql',
+            'sql/cli_script.sql',
             flag=flag,
             params=params
         )

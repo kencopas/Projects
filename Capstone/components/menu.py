@@ -1,9 +1,10 @@
+import os
 from datetime import datetime
 
 import pandas as pd
 
-from utils.sql_utils import SafeSQL
-from utils.cli_utils import MultipleChoice, UserInput, MenuDivider
+from utils.sql import SafeSQL
+from utils.cli import MultipleChoice, UserInput, MenuDivider
 
 
 class CLIManager:
@@ -58,8 +59,8 @@ class CLIManager:
                     case "modify_account":
 
                         SSN = selections['SSN']
-                        attr = selections['attribute']
-                        new_val = selections['new_value']
+                        attr_val = selections['modify_attribute'].items()
+                        attr, new_val = tuple(attr_val)[0]
 
                         params = (attr, new_val, SSN, SSN)
 
@@ -103,7 +104,14 @@ class CLIManager:
         if 'Date' in df.columns:
             df = df.sort_values(by='Date', ascending=False)
 
+        # Clear the console
+        if os.name == 'nt':
+            os.system('cls')
+        else:
+            os.system('clear')
+
         # Print the dataframe
+        print("\nQuery Successful.\n\n")
         print(df)
 
         # Total value if the value column exists
@@ -134,6 +142,11 @@ class CLIManager:
         except Exception:
             return False
 
+    def root_output(self, values: dict):
+        if values['menu_nav'] == "EXIT":
+            print("\nThank you for using the Loan Application Interface!\n")
+            exit(0)
+
     # Build the menu by component
     def build_menu(self) -> None:
 
@@ -144,12 +157,13 @@ class CLIManager:
                 id='zip',
                 prompt="Please enter a zipcode (5 digits): ",
                 type=int,
-                length=[5]
+                length=5
             ),
             UserInput(
                 id='date',
                 prompt="Please enter a month and year (MM-YYYY): ",
-                length=[7],
+                length=7,
+                regex=r"(0[1-9]|1[0-2])-\d{4}",
                 custom=self.valid_date
             ),
             id='view_transactions',
@@ -157,36 +171,79 @@ class CLIManager:
         )
 
         # Modify Account (Divider)
-        # Prompts user for the attribute and updated value
+        # Prompts user for the attribute and updated value, validates input
         modify_account_div = MenuDivider(
             UserInput(
                 id='SSN',
                 prompt="Please enter the Social Security Number (9 digits): ",
                 type=int,
-                length=[9]
+                length=9
             ),
             MultipleChoice(
-                id='attribute',
+                id='modify_attribute',
                 prompt="Which value would you like to update? ",
                 options={
-                    "First Name": "FIRST_NAME",
-                    "Middle Name": "MIDDLE_NAME",
-                    "Last Name": "LAST_NAME",
-                    "Credit Card Number": "CREDIT_CARD_NO",
-                    "Street Address": "FULL_STREET_ADDRESS",
-                    "City": "CUST_CITY",
-                    "State": "CUST_STATE",
-                    "Country": "CUST_COUNTRY",
-                    "Zip Code": "CUST_ZIP",
-                    "Phone Number": "CUST_PHONE",
-                    "Email": "CUST_EMAIL"
+                    "First Name": UserInput(
+                        id="FIRST_NAME",
+                        prompt="Please enter the new value: ",
+                        custom=lambda x: x.isalpha()
+                    ),
+                    "Middle Name": UserInput(
+                        id="MIDDLE_NAME",
+                        prompt="Please enter the new value: ",
+                        custom=lambda x: x.isalpha()
+                    ),
+                    "Last Name": UserInput(
+                        id="LAST_NAME",
+                        prompt="Please enter the new value: ",
+                        custom=lambda x: x.isalpha()
+                    ),
+                    "Credit Card Number": UserInput(
+                        id="CREDIT_CARD_NO",
+                        prompt="Please enter the new value: ",
+                        length=16,
+                        type=int
+                    ),
+                    "Street Address": UserInput(
+                        id="FULL_STREET_ADDRESS",
+                        prompt="Please enter the new value: "
+                    ),
+                    "City": UserInput(
+                        id="CUST_CITY",
+                        prompt="Please enter the new value: ",
+                        custom=lambda x: x.isalpha()
+                    ),
+                    "State": UserInput(
+                        id="CUST_STATE",
+                        prompt="Please enter the new value: ",
+                        length=2,
+                        custom=lambda x: x.isalpha()
+                    ),
+                    "Country": UserInput(
+                        id="CUST_COUNTRY",
+                        prompt="Please enter the new value: ",
+                        regex=r"[A-Za-z\s]+"
+                    ),
+                    "Zip Code": UserInput(
+                        id="CUST_ZIP",
+                        prompt="Please enter the new value: ",
+                        length=5,
+                        type=int
+                    ),
+                    "Phone Number": UserInput(
+                        id="CUST_PHONE",
+                        prompt="Please enter the new value: ",
+                        length=13,
+                        regex=r"\(\d{3}\)\d{3}-\d{4}"
+                    ),
+                    "Email": UserInput(
+                        id="CUST_EMAIL",
+                        prompt="Please enter the new value: ",
+                        regex=r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
+                    )
                 }
             ),
-            UserInput(
-                id='new_value',
-                prompt="What would you like to update the value to? "
-            ),
-            id='modify_account'
+            id='modify_account',
         )
 
         # Generate Monthly Bill (Divider)
@@ -196,12 +253,12 @@ class CLIManager:
                 id="CCN",
                 prompt="Please enter the credit card number: ",
                 type=int,
-                length=[16]
+                length=16
             ),
             UserInput(
                 id="date",
                 prompt="Please enter the date (MM-YYYY): ",
-                length=[7],
+                length=7,
                 custom=self.valid_date
             ),
             id='generate_bill'
@@ -214,18 +271,18 @@ class CLIManager:
                 id='SSN',
                 prompt="Please enter the Social Security Number (9 digits): ",
                 type=int,
-                length=[9]
+                length=9
             ),
             UserInput(
                 id="start_date",
                 prompt="Please enter the starting date (MM-DD-YYYY)",
-                length=[10],
+                length=10,
                 custom=self.valid_date
             ),
             UserInput(
                 id="end_date",
                 prompt="Please enter the ending date (MM-DD-YYYY)",
-                length=[10],
+                length=10,
                 custom=self.valid_date
             ),
             id="transactions_timeframe",
@@ -238,7 +295,7 @@ class CLIManager:
                 id='SSN',
                 prompt="Please enter the Social Security Number (9 digits): ",
                 type=int,
-                length=[9]
+                length=9
             ),
             id='view_account'
         )
@@ -268,8 +325,10 @@ class CLIManager:
             ),
             options={
                 "Transactions": transactions_div,
-                "Customers": customers_nav
-            }
+                "Customers": customers_nav,
+                "Exit": "EXIT"
+            },
+            pass_values=self.root_output
         )
 
         self.menu = menu_nav

@@ -206,7 +206,7 @@ if __name__ == "__main__":
     )
 
     result = ssql.parse_file(
-        'sql_scripts/cli_script.sql',
+        'sql/cli_script.sql',
         flag='VIEW_ACCOUNT',
         params=(123451164,)
     )
