@@ -1,19 +1,27 @@
-capstone -- Project folder
-    data -- Json files that are loaded into the pipeline via the DataClient
-    app -- Main application components
-        data_client.py -- Handles all direct interaction with data and database using pyspark and mysql connections
-        menu.py -- Utilizes the cli.py utility to construct a CLI for the application
-        transformers.py -- Contains file-specific transformer functions that clean and reformat the json data
-    docs -- Contains project-related documents
-        diagrams -- Worflow diagrams
-        mapping -- Mapping pdfs that show how the data should be transformed before being loaded into the MySQL database
-        CAP 350 - Data Engineering project -- pdf file with project requirements and specifications
-    lib -- Contains a single jar file as the mysql jdbc connector
-    sql -- SQL scripts
-        cli_script.sql -- Contains paramaterized queries that are parsed by a flag %%FLAG%% specific to the query
-        init.sql -- Runs the database and table initializations
-    utils -- Utilities used by the components
-        cli.py -- CLI utility used to create the CLI in menu.py
-        sql.py -- SQL utility that incorporates error handling into mysql connector for python, used by the DataClient
-    config -- Holds configurations for PySpark and MySQL as well as global constants
-    main.py -- Controls the initialization and running of the components
+Capstone
+├── main.py
+├── requirements.txt
+├── .gitignore
+├── app/
+│   ├── data_client.py
+│   ├── menu.py
+│   └── transformers.py
+├── config/
+│   ├── config.json
+│   └── constants.py
+├── data/
+│   ├── cdw_sapp_branch.json
+│   ├── cdw_sapp_credit_card.json
+│   └── cdw_sapp_customer.json
+├── docs/
+│   ├── CAP350_Project_Specs.pdf
+│   ├── diagrams/  # Workflow Diagrams
+│   └── mapping/   # Mapping PDFs
+├── lib/
+│   └── mysql-connector-j-9.3.0.jar
+├── sql/
+│   ├── cli_script.sql
+│   └── init.sql
+└── utils/
+    ├── cli.py
+    └── sql.py
