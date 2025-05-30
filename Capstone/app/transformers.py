@@ -9,6 +9,7 @@ designated.
 
 from pyspark.sql.functions import col, lower, concat, lit, substring, lpad
 from pyspark.sql import DataFrame
+from utils.logging import path_log
 
 
 def transform_customer(df: DataFrame) -> DataFrame:
@@ -38,7 +39,7 @@ def transform_customer(df: DataFrame) -> DataFrame:
         return df
 
     except Exception as e:
-        print(f"Exception occured: {e}")
+        path_log("Exception occurred", e)
 
 
 def transform_branch(df: DataFrame) -> DataFrame:
@@ -65,7 +66,7 @@ def transform_branch(df: DataFrame) -> DataFrame:
         return df
 
     except Exception as e:
-        print(f"Exception occured: {e}")
+        path_log("Exception occurred", e)
 
 
 def transform_credit(df: DataFrame) -> DataFrame:
@@ -93,7 +94,7 @@ def transform_credit(df: DataFrame) -> DataFrame:
         return df
 
     except Exception as e:
-        print(f"Exception occured: {e}")
+        path_log("Exception occurred", e)
 
 
 # Maps the data filenames to the corresponding transformer function
@@ -119,7 +120,4 @@ def transform(filename: str, df: DataFrame) -> DataFrame:
         return transformer_function(df)
 
     except Exception as err:
-        print(
-            f"Error transforming file {filename}:"
-            f"\n\n{type(err).__name__}: {err}"
-        )
+        path_log(f"Exception occurred transforming file: {filename}", err)

@@ -5,34 +5,21 @@ from collections.abc import Iterable
 
 import requests
 from pyspark.sql import SparkSession, DataFrame
-from utils.sql import SafeSQL, unpacked
+from utils.sql import SafeSQL
 
 from config.constants import LOAN_API_URL, SUPPORTED_EXTENSIONS
 from app.transformers import transform
-
-
-# Exception for missing MySQL Configurations
-class MissingMySQLConfig(Exception):
-    def __init__(self, action: str):
-        message = f"Exception occured while {action}"
-        super().__init__(message)
+from utils.logging import path_log
 
 
 class DataClient:
 
     """
-
-    The DataClient class acts as a much simpler connector to a SparkSession.
-    This class contains the basic features required to perform ETL processes
-    on the data in this application.
+    The DataClient class handles all interaction with the SparkSession
+    and MySQL connection.
     """
 
-    def __init__(
-        self,
-        spark: SparkSession,
-        sql: SafeSQL,
-        config: dict
-    ) -> None:
+    def __init__(self, spark: SparkSession, sql: SafeSQL, config: dict):
 
         # Save the SparkSession as an attribute
         self.spark = spark
@@ -81,19 +68,7 @@ class DataClient:
         for name, df in df_map.items():
             self.mysql_write(name, df)
 
-    # Retrieve JSON from an api endpoint and return it as a DataFrame
-    def get(self, api: str) -> DataFrame:
-
-        # Ping the api and save the json response
-        response = requests.get(api)
-        data = response.json()
-
-        # Convert JSON data to RDD and create DataFrame from RDD
-        rdd = self.spark.sparkContext.parallelize([json.dumps(data)])
-        df = self.spark.read.json(rdd)
-
-        return df
-
+    # Parses cli_script.sql file and runs the specified paramaterized query
     def query(self, flag: str, params: tuple) -> None:
 
         """
@@ -114,9 +89,22 @@ class DataClient:
         self.sql.commit()
 
         # Unpack the data, removing empty iterables
-        data = unpacked(data, remove_empty=True)
+        data = SafeSQL.unpacked(data, remove_empty=True)
 
         return data
+
+    # Retrieve JSON from an api endpoint and return it as a DataFrame
+    def get(self, api: str) -> DataFrame:
+
+        # Ping the api and save the json response
+        response = requests.get(api)
+        data = response.json()
+
+        # Convert JSON data to RDD and create DataFrame from RDD
+        rdd = self.spark.sparkContext.parallelize([json.dumps(data)])
+        df = self.spark.read.json(rdd)
+
+        return df
 
     # Safely read data from a json file or python object into a dataframe
     def file_to_df(self, fp: str) -> DataFrame:
@@ -131,8 +119,7 @@ class DataClient:
             data = converter(fp, **options)
             return data
         except Exception as err:
-            print(f"Error occured while reading file: {fp}")
-            print(f"{type(err).__name__}: {err}")
+            path_log(f"Error occured while reading file: {fp}", err)
 
     def load_files(self, *filepaths: str) -> Iterable[DataFrame]:
 
@@ -158,17 +145,12 @@ class DataClient:
         return output
 
     # Write a DataFrame to a MySQL table
-    def mysql_write(
-        self,
-        table: str,
-        df: DataFrame,
-        mode: str = "append"
-    ) -> None:
+    def mysql_write(self, table: str, df: DataFrame) -> None:
 
         try:
             # First check if the configurations are set
             if not self.config:
-                raise MissingMySQLConfig("writing to table.")
+                path_log("Attempting to write to table without configurations")
 
             # Then write the DataFrame to the specified table
             df.write \
@@ -178,40 +160,13 @@ class DataClient:
                 .option("dbtable", table) \
                 .option("user", self.config["user"]) \
                 .option("password", self.config["password"]) \
-                .mode(mode) \
+                .mode("append") \
                 .save()
 
-            print(f"pyspark.sql | Saved data to table {table}.")
+            path_log(f"Saved data to table {table}.")
 
         except Exception as err:
-            print(f"pyspark.sql | Exception occurred writing to table {table}")
-            print(f"{type(err).__name__}: {err}")
-
-    # Read MySQL table and return the data in a DataFrame
-    def mysql_read(self, table: str) -> DataFrame:
-
-        try:
-            # First check if the configurations are set
-            if not self.config:
-                raise MissingMySQLConfig("reading table.")
-
-            # Then read and return the specified MySQL table data
-            df = self.spark.read \
-                .format("jdbc") \
-                .option("url", self.config['jdbc_url']) \
-                .option("driver", self.config["jdbc_driver"]) \
-                .option("dbtable", table) \
-                .option("user", self.config["user"]) \
-                .option("password", self.config["password"]) \
-                .load()
-
-            print("MySQL Table read.")
-
-            return df
-
-        except Exception as err:
-            print(f"Exception occurred while reading table: {table}")
-            print(f"{type(err).__name__}: {err}")
+            path_log(f"Exception occurred writing to table {table}", err)
 
     def stop(self) -> None:
         self.spark.stop()

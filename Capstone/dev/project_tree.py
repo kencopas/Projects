@@ -3,21 +3,34 @@ import os
 import glob
 
 
-def project_tree(root_dir: str, *, ignore: list[str]) -> None:
+def project_tree(root_dir: str, *, ignore: set[str]) -> None:
     """
-    Generates a project filestructure tree using anytree
+    Generates a project file-structure tree using anytree
+
+    Useage:
+
+        project_tree(
+            <Directory to Project Folder>,
+            ignore=<Set of Folder/File Names you want excluded>
+        )
+
     """
 
+    # Get the project name and print it
     project_name = os.path.basename(root_dir).title()
     print(project_name)
     print()
 
+    # Initialize a queue
     queue = []
 
     dirs = glob.glob(rf"{root_dir}\*")
-    ignores = []
-    for name in ignore:
-        ignores.extend([dir for dir in dirs if name in dir])
+
+    ignores = [
+        dir for dir in dirs
+        for name in ignore
+        if name in dir
+    ]
     for dir in dirs:
         if dir in ignores:
             continue
@@ -53,13 +66,18 @@ def project_tree(root_dir: str, *, ignore: list[str]) -> None:
             print(f"{pre}{node.name}")
 
 
+# Example Useage:
+
 project_tree(
-    r"C:\Users\kenneth.copas\OneDrive - PeopleShores PBC"
-    r"\Desktop\Projects\Capstone",
+    r"C:\Users\kenneth.copas\OneDrive - PeopleShores PBC\Desktop\Projects\Capstone",
     ignore={
         "pycache",
         "debug",
         "project_tree.py",
-        "file_structure.txt"
+        "file_structure.txt",
+        "screenshots",
+        "csv",
+        ".png",
+        "dev"
     }
 )

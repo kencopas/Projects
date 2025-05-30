@@ -6,38 +6,6 @@ from mysql.connector.types import RowType
 import json
 
 
-# Prompt user and validate input
-def prompt(text: str, options: tuple[str]) -> str:
-
-    ans = input(f"{text} {options}")
-
-    while ans not in options:
-        ans = input(f"Please choose a valid option: {options}")
-
-    return ans
-
-
-# Unpacking function
-def unpacked(data: Iterable, *, remove_empty: bool = False) -> Iterable:
-
-    # Remove empty iterables if specified
-    if remove_empty:
-        data = list(filter(bool, data))
-
-    # While unpackable, unpack
-    while (
-        len(data) == 1
-        and isinstance(data[0], Iterable)
-        and not isinstance(data[0], (str, bytes))
-    ):
-        data = data[0]
-        if remove_empty:
-            data = list(filter(bool, data))
-
-    # Return unpacked data
-    return data
-
-
 # Safe connection and cursor querying
 class SafeSQL:
 
@@ -63,6 +31,36 @@ class SafeSQL:
         # Tracks error count and query count
         self.error_count = 0
         self.query_count = 0
+
+    @staticmethod
+    def prompt(text: str, options: tuple[str]) -> str:
+
+        ans = input(f"{text} {options}")
+
+        while ans not in options:
+            ans = input(f"Please choose a valid option: {options}")
+
+        return ans
+
+    @staticmethod
+    def unpacked(data: Iterable, *, remove_empty: bool = False) -> Iterable:
+
+        # Remove empty iterables if specified
+        if remove_empty:
+            data = list(filter(bool, data))
+
+        # While unpackable, unpack
+        while (
+            len(data) == 1
+            and isinstance(data[0], Iterable)
+            and not isinstance(data[0], (str, bytes))
+        ):
+            data = data[0]
+            if remove_empty:
+                data = list(filter(bool, data))
+
+        # Return unpacked data
+        return data
 
     def run(self, sqlin: str) -> list[RowType] | list[list[RowType]]:
 
@@ -113,7 +111,7 @@ class SafeSQL:
             )
 
             # unpacked the outputs list before returning
-            unpacked(outputs)
+            outputs = self.unpacked(outputs)
 
             return outputs
 
