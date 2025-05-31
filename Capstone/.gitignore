@@ -6,3 +6,4 @@ __pycache__/
 *.tmp
 capstone_project/docs/**/*.docx
 capstone_project/lib/*.jar
+macconfig.json

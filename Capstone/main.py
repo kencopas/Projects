@@ -98,7 +98,7 @@ class Application:
 
     # Loads the config.json file into the config attribute
     def load_config(self) -> dict:
-        with open("config/config.json") as f:
+        with open("config/macconfig.json") as f:
             self.config = json.load(f)
         return self.config
 

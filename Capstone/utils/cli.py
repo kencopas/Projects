@@ -128,22 +128,23 @@ class MenuDivider(CLIComponent):
         self.id = id
         self.pass_values = pass_values
 
-    def run(self) -> dict[str: any]:
+    def run(self) -> tuple[str, any]:
         """Runs all child components and collects their outputs.
 
         Returns:
             dict[str, any]: Dictionary mapping the component's ID to outputs.
         """
 
-        # Construct a selections dictionary
-        selections = {
-            k: v
-            for ui in self.components
-            for k, v in ui.run().items()
-        }
+        # Construct a selections dictionary by extending each subcomponent's
+        selections = {}
+        for ui in self.components:
+            output = ui.run()
+            if type(output) is tuple:
+                output = {output[0]: output[1]}
+            selections.update(output)
 
         # Format the output as (id, selections_dict) if there is an id
-        output = {self.id: selections}
+        output = (self.id, selections)
 
         # Pass the output to the pass_values function if it exists
         if self.pass_values:
@@ -180,7 +181,7 @@ class MultipleChoice(CLIComponent):
         self.options = options
         self.pass_values = pass_values
 
-    def run(self) -> dict[str: any]:
+    def run(self) -> tuple[str, any]:
         """Presents the multiple-choice options enumerated.
 
         Returns:
@@ -194,7 +195,7 @@ class MultipleChoice(CLIComponent):
             if issubclass(type(selection), CLIComponent):
                 selection = selection.run()
 
-            output = {self.id: selection}
+            output = (self.id, selection)
 
             if self.pass_values:
                 self.pass_values(output)
