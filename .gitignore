@@ -2,3 +2,5 @@ __pycache__/
 JSON-tree-visualizer/
 React/
 .env
+.DS_Store
+Capstone.zip
