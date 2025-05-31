@@ -6,18 +6,19 @@ a score between 0 and 1. The result is a dictionary with the keys being the tupl
 
 """
 
-from random import randint, uniform
+from random import uniform
 
-# Generates a random weight list and image (tuple of random pixel values), then evaluates each list and returns the result as a dictionary
+# Generates a random weight list and image (tuple of random pixel values),
+# then evaluates each list and returns the result as a dictionary
 def gen_set(n, length):
 
     my_dict = {}
     weight_list = [round(uniform(0, 1), 1) for _ in range(length**2)] # List of hidden weights
 
     for _ in range(n):
-        skew = uniform(0, 2) # Random skew applied to the pixel values to prevent consistency
-        new_image = tuple(uniform(0, 1)**skew for _ in range(length**2)) # Random pixel values between 0 and 1
-        my_dict[new_image] = eval_image(new_image, weight_list) # Output data: Key=Image, Value=Evaluation Score
+        skew = uniform(0, 2)  # Random skew applied to the pixel values to prevent consistency
+        new_image = tuple(uniform(0, 1)**skew for _ in range(length**2))  # Random pixel values between 0 and 1
+        my_dict[new_image] = eval_image(new_image, weight_list)  # Output data: Key=Image, Value=Evaluation Score
 
     return my_dict
 
