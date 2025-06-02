@@ -1,4 +1,0 @@
-pyspark
-mysql-connector-python
-requests
-pandas
