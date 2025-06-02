@@ -1,18 +1,24 @@
 """
 
-This program pulls medical records from an API endpoint and loads them into memory. The data that is extracted and saved is all temperatures recorded partitioned by
-doctor name and diagnosis id. For efficient lookup, this information is stored in a dictionary that holds a tuple key (doctor_name, diagnosis_id) and
-a list value [temp1, temp2, temp3...]. Upon user query, this information is retrieved in O(1) time and the maximum and minimum temperature values are retreived in
-O(n) time.
+This program pulls medical records from an API endpoint and loads them into
+memory. The data that is extracted and saved is all temperatures recorded
+partitioned by doctor name and diagnosis id. For efficient lookup, this
+information is stored in a dictionary that holds a tuple key
+(doctor_name, diagnosis_id) and a list value [temp1, temp2, temp3...]. Upon
+user query, this information is retrieved in O(1) time and the maximum and
+minimum temperature values are retreived in O(n) time.
 
 """
 
 import requests
 
-# Initialize a dictionary with the format (doctor_name, diagnosis_id): [temp1, temp2, temp3...]
+# Initialize a dictionary with the format (doctor_name, diagnosis_id):
+# [temp1, temp2, temp3...]
 temperatures = {}
 
-# Extract the medical records, transform them to be accessed by doctor name and diagnosis id, and store the data in the temperatures dictionary 
+
+# Extract the medical records, transform them to be accessed by doctor name
+# and diagnosis id, and store the data in the temperatures dictionary
 def etl():
     # Initialize index
     n = 1
@@ -36,7 +42,8 @@ def etl():
                 # Create a tuple key for the temperature dictionary
                 key = (doctor_name, diagnosis_id)
                 
-                # If the key does not exist in the dictionary, create an empty list with that key
+                # If the key does not exist in the dictionary, create an empty
+                # list with that key
                 if not temperatures.get(key):
                     temperatures[key] = []
                 
@@ -58,8 +65,8 @@ def etl():
 
     print("Data successfully loaded.")
 
-# Reference the temperatures dictionary by key (doctor_name, diagnosis_id) to retrieve the list of temperatures
-# Return the max and min temperature within that list
+# Reference the temperatures dictionary by key (doctor_name, diagnosis_id) to
+# retrieve the list of temperatures. Return the max and min temperature
 def body_temperature(doctor_name, diagnosis_id):
 
     # If the temperatures have not been pulled from the api, call etl
