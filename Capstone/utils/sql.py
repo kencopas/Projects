@@ -3,7 +3,6 @@ from collections.abc import Iterable
 import mysql.connector
 from mysql.connector import Error
 from mysql.connector.types import RowType
-import json
 
 
 # Safe connection and cursor querying
@@ -188,25 +187,3 @@ class SafeSQL:
 
         self.cursor.close()
         self.connector.close()
-
-
-if __name__ == "__main__":
-
-    with open("config.json", 'r') as f:
-        data = json.load(f)
-
-    ssql = SafeSQL(
-        user=data['user'],
-        password=data['password'],
-        host=data['host'],
-        database='creditcard_capstone',
-        verbose=True
-    )
-
-    result = ssql.parse_file(
-        'sql/cli_script.sql',
-        flag='VIEW_ACCOUNT',
-        params=(123451164,)
-    )
-
-    print(result)

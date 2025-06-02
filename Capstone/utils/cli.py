@@ -56,6 +56,7 @@ class CLIComponent:
                 - 'type': a callable that validates/casts the input type
                 - 'length': int or list of valid lengths
                 - 'value': list or range of valid integer values
+                - 'regex': regex string/pattern to fullmatch input
                 - 'custom': custom validation function returning bool
 
         Returns:

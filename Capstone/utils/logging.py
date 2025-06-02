@@ -2,6 +2,14 @@ import inspect
 
 
 def path_log(message: str, err: Exception = None) -> None:
+    """
+    This function logs a message in the console, but prepends the function name
+    as would be referenced statically. Function/method's are logged as follows:
+
+    function_name | message
+    class_name.method_name | message
+    """
+
     frame_info = inspect.stack()[1]
     frame = frame_info.frame
     func_name = frame_info.function
