@@ -35,32 +35,36 @@ def gen_file_structure(output_fp: str, main_fp: str, *, ignores: set = set()) ->
 
     # Initialize file structure dict
     file_structure = {
-        'project_directory_path': str(cwd),
-        'project_directory_name': cwd.name,
-        'subdirectories': {}
+        'path': str(cwd),
+        'subpaths': []
     }
 
     # Initialize current node
-    node = file_structure['subdirectories']
+    node = file_structure['subpaths']
 
     # Depth-First Search function for file structure traversal
-    def dfs(dir: Path, node: dict):
+    def dfs(dir: Path, node: list):
 
         # Iterate through subpaths
         for subpath in dir.iterdir():
 
             if subpath.is_dir() and subpath.name not in ignores:
                 # Append directory to deque, create dir_name-subdirs pair
-                node[subpath.name] = dict()
-                dfs(subpath, node[subpath.name])
+                node.append({'path': str(subpath), 'subpaths': []})
+                dfs(subpath, node[-1]['subpaths'])
 
             elif subpath.is_file() and subpath.name not in ignores and subpath.suffix not in ignores:
                 try:
                     # Create filename-contents pair
-                    node[subpath.name] = subpath.read_text()
+                    contents = subpath.read_text()
+                    # Truncate contents if necessary
+                    if len(contents) > 10000:
+                        contents = f"[TRUNCATED] {contents[:10000]}"
                 except UnicodeDecodeError:
-                    node[subpath.name] = "File contents are not decodable."
+                    contents = "File contents are not decodable."
                     print(f"Failed to decode: {subpath.name}")
+
+                node.append({'path': str(subpath), 'contents': contents})
 
     # Perform DFS on the current working directory
     dfs(cwd, node)

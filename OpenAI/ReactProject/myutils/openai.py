@@ -1,6 +1,7 @@
 import openai
 from myutils.logging import gotenv, path_log
 import time
+import os
 
 
 class EasyGPT:
@@ -24,7 +25,8 @@ class EasyGPT:
             openai.beta.threads.messages.create(
                 thread_id=self.thread.id,
                 role="user",
-                content=message
+                content=message,
+                timeout=10
             )
 
             # Run the assistant
@@ -51,10 +53,17 @@ class EasyGPT:
 
     def retrieve(self) -> str:
 
+        os.system('cls')
+
         # Retrieve messages from the thread
         messages = openai.beta.threads.messages.list(thread_id=self.thread.id)
 
+        print('\n\nSTART MESSAGES LIST\n\n')
+        for message in messages.data:
+            print(f"{message.role}: {message.content}")
+        print('\n\n END MESSAGES LIST')
+
         # Find and print the assistant's latest message
-        for message in reversed(messages.data):  # messages are returned in reverse chronological order
+        for message in messages.data:
             if message.role == "assistant":
                 return message.content[0].text.value

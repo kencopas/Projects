@@ -1,0 +1,25 @@
+{
+    "path": "ETLProject",
+    "subpaths": [
+        {
+            "path": "ETLProject/main.py",
+            "contents": "# main.py\n\nimport etl\n\nif __name__ == '__main__':\n    etl.run_etl()"
+        },
+        {
+            "path": "ETLProject/etl.py",
+            "contents": "# etl.py\n\nfrom pyspark.sql import SparkSession\nimport mysql.connector\nimport json\n\ndef run_etl():\n    # Load configurations\n    with open('config.json', 'r') as f:\n        config = json.load(f)\n    \n    # Initialize SparkSession\n    spark = SparkSession.builder \\\n        .appName('BankingETL') \\\n        .getOrCreate()\n    \n    # Read CSV\n    df = spark.read.csv(config['input_file'], header=True)\n    df.show()\n    \n    # Process data (for demonstration, just selecting necessary columns)\n    df = df.select(config['columns'])\n    \n    # Write to MySQL\n    conn = mysql.connector.connect(**config['mysql'])\n    cursor = conn.cursor()\n    for row in df.collect():\n        cursor.execute(f\"\"\"INSERT INTO {config['table_name']} ({','.join(config['columns'])}) VALUES ({','.join(['%s'] * len(config['columns']))})\"\"\", tuple(row))\n    conn.commit()\n    cursor.close()\n    conn.close()"
+        },
+        {
+            "path": "ETLProject/config.json",
+            "contents": "{\n    \"input_file\": \"data/banking_data.csv\",\n    \"columns\": [\"id\", \"name\", \"balance\", \"account_type\"],\n    \"mysql\": {\n        \"host\": \"localhost\",\n        \"user\": \"user\",\n        \"password\": \"password\",\n        \"database\": \"banking_db\"\n    },\n    \"table_name\": \"bank_accounts\"\n}"
+        },
+        {
+            "path": "ETLProject/requirements.txt",
+            "contents": "pyspark\nmysql-connector-python\n"
+        },
+        {
+            "path": "ETLProject/cli.py",
+            "contents": "# cli.py\n\nimport mysql.connector\nimport argparse\nimport json\n\ndef query_database(query):\n    with open('config.json', 'r') as f:\n        config = json.load(f)\n    \n    conn = mysql.connector.connect(**config['mysql'])\n    cursor = conn.cursor()\n    cursor.execute(query)\n    for result in cursor.fetchall():\n        print(result)\n    cursor.close()\n    conn.close()\n\nif __name__ == '__main__':\n    parser = argparse.ArgumentParser(description='Interact with the bank database')\n    parser.add_argument('query', type=str, help='SQL query to execute')\n    args = parser.parse_args()\n    query_database(args.query)"
+        }
+    ]
+}
