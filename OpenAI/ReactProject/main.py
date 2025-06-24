@@ -1,17 +1,16 @@
 import json
 import subprocess
 from pathlib import Path
-import time
 
-import markdown
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template
+from bs4 import BeautifulSoup
 
 from myutils.openai import EasyGPT
 from myutils.logging import gotenv, gen_file_structure
-from constants import HTML_TEMPLATE
 
 app = Flask(__name__)
+_vc = None
 
 
 class VibeCoder:
@@ -58,28 +57,22 @@ class VibeCoder:
         self.gpt.create(message)
         response = self.gpt.retrieve()
 
-        input_html = markdown.markdown(message)
-        output_html = markdown.markdown(response)
-
         # Write the markdown response to output.md
         with open('templates/index.html', 'w', encoding='utf-8') as f:
-            f.write(HTML_TEMPLATE.format(input_html, output_html))
+            f.write(response)
 
-        # Parse the markdown response to get the json data
-        splits = response.split(r'```')
-        json_strings = list(filter(lambda x: x.startswith('json'), splits))
+        soup = BeautifulSoup(response, 'lxml')
 
-        if len(json_strings) == 1:
-            json_data = json.loads(json_strings[0][4:].strip())
-        else:
-            json_datas = list(map(lambda x: json.loads(x.strip()), json_strings))
-            json_data = list(filter(lambda x: x.get('path'), json_datas))[0][4:].strip()
+        target_element = soup.find(id='file-structure')
 
-        # Return the updated json data
-        return json_data
+        if target_element:
+            return json.loads(target_element.text)
+
+        return None
 
     def init_project(self, prompt: str):
         """Creates project folder and main.py file, sets first update to project"""
+        print("init")
 
         # Create the project folder
         self.project_path.mkdir(parents=True, exist_ok=True)
@@ -175,59 +168,64 @@ class VibeCoder:
         # Perform DFS on the current working directory
         dfs(node)
 
-    def vibes(self, main_file: str = None) -> None:
-        """Loops project structure updates from the assistant"""
-
-        goahead = 'Y'
+    def vibe(self, main_file: str = None) -> None:
+        """One project structure update from the assistant"""
+        print('vibing')
 
         if not main_file:
             main_file = str(self.main_file)
 
-        # Loop project updates
-        while goahead.lower().strip() == 'y':
+        # Generate and format the file structure json data
+        fs_data = gen_file_structure('file-structure.json', main_file)
+        fs = json.dumps(fs_data, indent=2, sort_keys=True)
 
-            # Generate and format the file structure json data
-            fs_data = gen_file_structure('file-structure.json', main_file)
-            fs = json.dumps(fs_data, indent=2, sort_keys=True)
+        print(self.project_path)
 
-            print(self.project_path)
+        # Run the main python file and capture the output
+        result = subprocess.run(
+            [self.python_path, main_file],
+            cwd=self.project_path,
+            capture_output=True,
+            text=True
+        )
 
-            # Run the main python file and capture the output
-            result = subprocess.run(
-                [self.python_path, main_file],
-                cwd=self.project_path,
-                capture_output=True,
-                text=True
-            )
+        # Construct message
+        message = (
+            f"File Structure:\n\n```json\n{fs}\n```\n\n"
+            f"**STDOUT:**\n```\n{result.stdout.strip() or '[No output]'}\n```\n\n"
+            f"**STDERR:**\n```\n{result.stderr.strip() or '[No output]'}\n```"
+        )
 
-            # Construct message
-            message = (
-                f"File Structure:\n\n```json\n{fs}\n```\n\n"
-                f"**STDOUT:**\n```\n{result.stdout.strip() or '[No output]'}\n```\n\n"
-                f"**STDERR:**\n```\n{result.stderr.strip() or '[No output]'}\n```"
-            )
+        # Send the message to the Assistant, write the response to the project structure
+        response = self.send_message(message)
+        self.write_structure(response)
 
-            # Send the message to the Assistant, write the response to the project structure
-            response = self.send_message(message)
-            self.write_structure(response)
 
-            goahead = input("Continue? Y | N")
+def getvc():
+    global _vc
+    if not _vc:
+        _vc = VibeCoder(
+            """Create a project that manages an ETL Process for a banking
+            dataset. The project should use PySpark and MySQL to read data from json
+            flat files, reformat the data for MySQL, and then load the data into a
+            MySQL database. All configurations should be pulled from one file
+            for modularity, and the project itself should be very modular. Also
+            include a CLI that can interact with the database after the ETL
+            process is finished. This should be done in python and should
+            include. a requirements.txt file for ease of use.""",
+            r"C:\\Users\\kenneth.copas\\OneDrive - PeopleShores PBC\\Desktop\\Projects\\OpenAI\\ETLProject"
+        )
+    return _vc
 
 
 @app.route('/')
 def home():
 
-    vc = VibeCoder(
-        """Create a project that manages an ETL Process for a banking dataset.
-        The project should use PySpark and MySQL to read data from json flat
-        files, reformat the data for MySQL, and then load the data into a
-        MySQL database. All configurations should be pulled from one file for
-        modularity, and the project itself should be very modular. Also
-        include a CLI that can interact with the database after the ETL
-        process is finished. This should be done in python and should include.
-        a requirements.txt file for ease of use.""",
-        r"C:\\Users\\kenneth.copas\\OneDrive - PeopleShores PBC\\Desktop\\Projects\\OpenAI\\ETLProject"
-    )
+    print("Vibing...")
+
+    vc = getvc()
+
+    vc.vibe(r"C:\\Users\\kenneth.copas\\OneDrive - PeopleShores PBC\\Desktop\\Projects\\OpenAI\\ETLProject\\main.py")
 
     return render_template('index.html')
 
@@ -235,5 +233,3 @@ def home():
 if __name__ == '__main__':
 
     app.run(debug=True)
-
-    print('hello')
